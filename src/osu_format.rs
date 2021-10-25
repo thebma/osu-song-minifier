@@ -167,7 +167,7 @@ pub struct OFSectionDifficulty
 #[derive(Default, Clone, Debug)]
 pub struct OFSectionVideo
 {
-    pub start_time: u32,
+    pub start_time: i32,
     pub file_name: String,
     pub x_offset: i32,
     pub y_offset: i32
@@ -538,12 +538,12 @@ impl OsuFile
         let event_type = line_split[0];
         let mut section = self.events_section.clone();
 
-        if line_split.len() == 5 && (event_type == "0" || event_type == "Background") 
+        if line_split.len() >= 3 && (event_type == "0" || event_type == "Background") 
         {
-            let file = line_split[2].to_owned();
-            let x_offset = line_split[3].parse::<i32>().unwrap();
-            let y_offset = line_split[4].parse::<i32>().unwrap();
-
+            let file = line_split[2].to_owned().replace("\"", "");
+            let x_offset = if line_split.len() == 4 { line_split[3].parse::<i32>().unwrap() } else { 0 };
+            let y_offset = if line_split.len() == 5 { line_split[4].parse::<i32>().unwrap() } else { 0 };
+            
             section.background = OFSectionBackground {
                 file_name: file,
                 x_offset: x_offset,
@@ -551,13 +551,13 @@ impl OsuFile
             };  
         }
 
-        if line_split.len() == 5 && (event_type == "1" || event_type == "Video")
+        if line_split.len() >= 3 && (event_type == "1" || event_type == "Video")
         {
-            let start_time = line_split[1].parse::<u32>().unwrap();
-            let file = line_split[2].to_owned();
-            let x_offset = line_split[3].parse::<i32>().unwrap();
-            let y_offset = line_split[4].parse::<i32>().unwrap();
-
+            let start_time = line_split[1].parse::<i32>().unwrap();
+            let file = line_split[2].to_owned().replace("\"", "");
+            let x_offset = if line_split.len() == 4 { line_split[3].parse::<i32>().unwrap() } else { 0 };
+            let y_offset = if line_split.len() == 5 { line_split[4].parse::<i32>().unwrap() } else { 0 };
+            
             section.video = OFSectionVideo {
                 start_time: start_time,
                 file_name: file,
