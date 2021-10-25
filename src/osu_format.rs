@@ -165,6 +165,23 @@ pub struct OFSectionDifficulty
 }
 
 #[derive(Default, Clone, Debug)]
+pub struct OFSectionVideo
+{
+    pub start_time: u32,
+    pub file_name: String,
+    pub x_offset: i32,
+    pub y_offset: i32
+}
+
+#[derive(Default, Clone, Debug)]
+pub struct OFSectionBackground 
+{
+    pub file_name: String,
+    pub x_offset: i32,
+    pub y_offset: i32,
+}
+
+#[derive(Default, Clone, Debug)]
 pub struct OFSectionBreakPeriod
 {
     pub start: u32,
@@ -174,9 +191,10 @@ pub struct OFSectionBreakPeriod
 #[derive(Default, Clone, Debug)]
 pub struct OFSectionEvents 
 {
-    pub background_file: String,
-    pub video_file: String,
+    pub background: OFSectionBackground,
+    pub video: OFSectionVideo,
     pub breaks: Vec<OFSectionBreakPeriod>,
+    //TODO: Do the storyboard crap.
 }
 
 #[derive(Default, Clone, Debug)]
@@ -198,6 +216,7 @@ impl OFSectionColour
 {
     fn from_str(input: String, index: i8) -> Result<OFSectionColour, String>
     {
+        //TODO: Find a better way to assign indexes, generalize this behaviour being independant from "index".
         //TODO: This is incorrect behaviour and should be dealt with up stream.
         // if index < 0 
         // {
@@ -472,7 +491,6 @@ impl OsuFile
             "Tags" => { section.tags = value },
             "BeatmapID" => { section.beatmap_id= as_i64(); },
             "BeatmapSetID" => { section.beatmap_set_id = as_i64(); },
-
             _ => { println!("Unknown field {} inside metadata section with value: {}", key, value); }
         }
 
@@ -522,17 +540,33 @@ impl OsuFile
 
         if line_split.len() == 5 && (event_type == "0" || event_type == "Background") 
         {
-            section.background_file = line_split[2].to_owned();
+            let file = line_split[2].to_owned();
+            let x_offset = line_split[3].parse::<i32>().unwrap();
+            let y_offset = line_split[4].parse::<i32>().unwrap();
+
+            section.background = OFSectionBackground {
+                file_name: file,
+                x_offset: x_offset,
+                y_offset: y_offset
+            };  
         }
 
         if line_split.len() == 5 && (event_type == "1" || event_type == "Video")
         {
-            section.video_file = line_split[2].to_owned();
+            let start_time = line_split[1].parse::<u32>().unwrap();
+            let file = line_split[2].to_owned();
+            let x_offset = line_split[3].parse::<i32>().unwrap();
+            let y_offset = line_split[4].parse::<i32>().unwrap();
+
+            section.video = OFSectionVideo {
+                start_time: start_time,
+                file_name: file,
+                x_offset: x_offset,
+                y_offset: y_offset
+            };  
         }
 
-        //TODO: parse the rest of events.
-        //TODO: parse video/background information. 
-
+        //TODO: parse storyboard.
         self.events_section = section; 
     }
 
@@ -582,7 +616,7 @@ impl OsuFile
         {
             println!("Unhandled key-value pair in Colours, key: {}, value: {}", key, value);
         }
-        
+
         self.colours_section = section;
     }
 
