@@ -146,7 +146,7 @@ pub struct OFSectionMetadata
     pub creator: String,
     pub version: String,
     pub source: String,
-    pub tags: String, //Make this a OFSectionTagsCollection.
+    pub tags: String, //TODO: Make this a OFSectionTagsCollection.
     pub beatmap_id: i64,
     pub beatmap_set_id: i64,
 }
@@ -200,7 +200,7 @@ pub struct OFSectionEvents
 #[derive(Default, Clone, Debug)]
 pub struct OFSectionTimingPoints 
 {
-    //pub rows: Vec<OFSectionRow>;
+    //TODO: Parse timinig points.
 }
 
 #[derive(Default, Clone, Debug)]
@@ -216,13 +216,7 @@ impl OFSectionColour
 {
     fn from_str(input: String, index: i8) -> Result<OFSectionColour, String>
     {
-        //TODO: Find a better way to assign indexes, generalize this behaviour being independant from "index".
-        //TODO: This is incorrect behaviour and should be dealt with up stream.
-        // if index < 0 
-        // {
-        //     return Err(String::from("invalid index for colour from_str."))
-        // }
-
+        //TODO: Find a better way to assign indices, generalize this behaviour being independant from "index".
         let rgb: Vec<&str> = input.split(",").collect();
 
         if rgb.len() != 3 
@@ -251,7 +245,7 @@ pub struct OFSectionColours
 #[derive(Default, Clone, Debug)]
 pub struct OFSectionHitObjects 
 {
-    //TODO.
+    //TODO: Parse hit objects.
 }
 
 //TODO: Support deprecated variables.
@@ -270,6 +264,7 @@ pub struct OsuFile
     pub hit_object_section: OFSectionHitObjects
 }
 
+//TODO: Segregate BOM stuff into a dedicated file.
 pub struct ByteOrderMark
 {
     len: u8,
@@ -345,7 +340,7 @@ impl OsuFile
                 match std::str::from_utf8(&line_bytes_without_bom[..]) 
                 {
                     Ok(v) => { return v.to_owned(); }
-                    Err(_) => { panic!("Could not remove BOM, press 911 to call an EOD"); }
+                    Err(_) => { panic!("Could not remove BOM, call 911 to request an EOD squad."); }
                 }
             }
         }
@@ -449,6 +444,8 @@ impl OsuFile
         }
 
         let mut section = self.editor_section.clone();
+
+        //TODO: generalize these functions.
         let as_u32 = || -> u32 { value.parse::<u32>().unwrap() };
         let as_f32 = || -> f32 { value.parse::<f32>().unwrap() };
 
@@ -477,6 +474,9 @@ impl OsuFile
         }
         
         let mut section = self.metadata_section.clone();
+
+        
+        //TODO: generalize these functions.
         let as_i64 = || -> i64 { value.parse::<i64>().unwrap() };
         
         match key.as_ref()
@@ -509,7 +509,10 @@ impl OsuFile
         }
         
         let mut section = self.difficulty_section.clone();
+   
+        //TODO: generalize these functions.
         let as_f32 = || -> f32 { value.parse::<f32>().unwrap() };
+
         match key.as_ref()
         {
             "HPDrainRate" => { section.hp_drain_rate = as_f32(); },
@@ -622,6 +625,7 @@ impl OsuFile
 
     fn parse_hit_objects(&self, line: String, error: &mut String)
     {
+        //TODO: Parse hit objects.
         //println!("Handle hit objects...")
     }
 
@@ -657,10 +661,9 @@ impl OsuFile
                     })
                     .collect();
 
-                if !heading.is_empty()
-                {
-                    context = heading.to_lowercase();
-                }
+                if heading.is_empty() { continue; };
+
+                context = heading.to_lowercase();
             }
             else 
             {
@@ -680,9 +683,9 @@ impl OsuFile
                     _ => { println!("Unknown context: {}", context); }
                 }
 
+                //TODO: Better error handling, use Rust's std::result::Result method.
                 if !error.is_empty() {
                     println!("Parsing .osu failed at section '{}', reason: {} on file {:?}", context, error, path);
-                    assert!(false);
                     break;
                 }
             }
