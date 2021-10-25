@@ -223,7 +223,10 @@ impl OFSectionColour
 #[derive(Default, Clone, Debug)]
 pub struct OFSectionColours 
 {
-    colours: Vec<OFSectionColour>
+    colours: Vec<OFSectionColour>,
+    slider_border: OFSectionColour,
+    slider_track_override: OFSectionColour,
+    my_life_is_meaning_less: String
 }
 
 #[derive(Default, Clone, Debug)]
@@ -563,19 +566,23 @@ impl OsuFile
         }
         else if key.starts_with("SliderBorder")
         {
-            match OFSectionColour::from_str(value, -1) {
-                Ok(v) => { section.colours.push(v); },
-                Err(e) => { println!("Converting value from string failed: {}", e)}
-            }
+            section.slider_border = OFSectionColour::from_str(value, -1).unwrap();
+        }
+        else if key.starts_with("SliderTrackOverride")
+        {
+            section.slider_track_override = OFSectionColour::from_str(value, -1).unwrap();
+        }
+        else if key.starts_with("MyLifeIsMeaningless")
+        {
+            //NOTE: A random tid-bit I stumbled upon on in one of the ~7500 beatmaps.
+            //      from this beatmap: https://osu.ppy.sh/beatmapsets/1357481#osu/2809324.
+            section.my_life_is_meaning_less = "Hey cheer up Myahkey, life is worth living for.".to_owned();
         }
         else
         {
-            println!("unhandled: {}", key);
+            println!("Unhandled key-value pair in Colours, key: {}, value: {}", key, value);
         }
-
-        //TODO: Handle SliderBorder and others.
-
-
+        
         self.colours_section = section;
     }
 
