@@ -279,7 +279,6 @@ impl OsuFile
         }
 
         self.version = line.trim().to_owned();
-        println!("{}", self.version);
     }
 
     fn get_key_value(&mut self, line: String) -> (bool, String, String)

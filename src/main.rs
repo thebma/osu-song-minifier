@@ -95,9 +95,9 @@ fn find_critical_files(osu_path: PathBuf)  -> Result<Vec<String>, io::Error>
     let mut file = osu_format::OsuFile::new();
     file.parse(osu_path);
 
-    // println!("Audio file is {}", file.general_section.audio_file_name);
-    // println!("Background file is {:?}", file.events_section.background);
-    // println!("Video file is {:?}", file.events_section.video);
+    println!("Audio file is {}", file.general_section.audio_file_name);
+    println!("Background file is {:?}", file.events_section.background);
+    println!("Video file is {:?}", file.events_section.video);
 
     Ok(files_to_keep)
 }
