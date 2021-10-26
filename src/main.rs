@@ -11,8 +11,10 @@ use std::time::{Instant};
       Unwrapping and praying for the best is the current approach, which arguebly is not the most bulletproof :)
         Whilest generalizing the iteration code, we nuked all the Result<> structures, an even worse idea.
         Might wanna test this throughougly!
-    - Optionally zip the entire cleaned directory for passing around.
-        Having this option would be nice if someone is not willing to sacrifice his Songs folder.
+    - Specify modes for "cleaning"...
+        "Destructive" => Delete the files directly from your Songs folder.
+        "Copy" => Create a new directory with the files.
+        "Zip" => Same as copy, but outputs a zip.
 */
 fn main() 
 {
@@ -24,11 +26,12 @@ fn main()
         Err(_) => { println!("Unable to locate Osu! install path."); }
     };
     
-    let songs_path: PathBuf = Path::new(&root).join("Songs");
+    let osu_path: PathBuf = Path::new(&root).to_path_buf();
+    let songs_path: PathBuf = osu_path.join("Songs");
 
     if songs_path.exists() 
     {
-        match iterate_songs(songs_path)
+        match iterate_songs(osu_path, songs_path)
         {
             Ok(_) => { println!("Successfully parsed Osu! directory.")},
             Err(err) => { panic!("Failed to parse you Osu! directory, error: {}", err)}
@@ -43,66 +46,143 @@ fn main()
     println!("Execution time: {} seconds", time);
 }
 
-fn recurse_directory(
-    path: PathBuf, 
-    predicate: impl Fn(PathBuf) -> bool, 
-    callback: impl Fn(PathBuf) -> Result<(), io::Error>
-) -> Result<(), io::Error>
+fn recurse_directory(path: PathBuf, predicate: impl Fn(PathBuf) -> bool) -> Vec<PathBuf>
 {
-    for entry in fs::read_dir(path)?
+    let mut found: Vec<PathBuf> = Vec::new();
+
+    if let Ok(entries) = fs::read_dir(path) 
     {
-        let entry: fs::DirEntry = entry?;
-        let path = entry.path();
-        
-        if predicate(path.clone()) {
-            callback(path.clone())?;
+        for entry in entries 
+        {
+            if let Ok(entry) = entry 
+            {
+                let path = entry.path();
+
+                if predicate(path.clone()) 
+                {
+                    found.push(path.clone());
+                }
+            }
         }
+    }
+
+    return found;
+}
+
+fn iterate_songs(osu_path: PathBuf, songs_folder: PathBuf) -> Result<(), io::Error>
+{
+    let songs = recurse_directory(songs_folder, | path | { path.exists() && path.is_dir() });
+
+    for song in songs {
+        evaluate_song(osu_path.clone(), song)?;
     }
 
     Ok(())
 }
 
-fn iterate_songs(songs_folder: PathBuf) -> Result<(), io::Error>
+fn evaluate_song(osu_path: PathBuf, song_path: PathBuf) -> Result<(), io::Error>
 {
-    recurse_directory(songs_folder,
-        | path | { path.exists() && path.is_dir() },
-        | path | { evaluate_song(path) }
-    )
+    Ok(iterate_song_files(osu_path, song_path)?)
 }
 
-fn evaluate_song(song_path: PathBuf) -> Result<(), io::Error>
+fn iterate_song_files(osu_path: PathBuf, song_path: PathBuf) -> Result<(), io::Error>
 {
-    iterate_song_files(song_path)
+    let path = song_path.clone();
+    let mut keep: Vec<PathBuf> = Vec::new();
+
+    let files: Vec<PathBuf> = recurse_directory(song_path, |path| { path.exists() && path.is_file() });
+
+    for file in files {
+        keep.extend(evaluate_song_files(path.clone(), file));
+    }
+
+    keep.sort();
+    keep.dedup();
+
+    println!("After {:?}", keep);
+    create_shadow(osu_path, path, keep);
+
+    Ok(())
 }
-
-fn iterate_song_files(song_path: PathBuf) -> Result<(), io::Error>
+    
+fn evaluate_song_files(song_path: PathBuf, song_file_path: PathBuf) -> Vec<PathBuf>
 {
-    recurse_directory(song_path,
-        | path | { path.exists() && path.is_file() },
-        | path | { evaluate_song_files(path) }
-    )
-}
-
-fn evaluate_song_files(song_file_path: PathBuf) -> Result<(), io::Error>
-{
-    let extension = song_file_path.extension();
-
+    let song_file_clone = song_file_path.clone();
+    let song_path_clone = song_path.clone();
+    let extension = song_file_clone.extension();
+    
     if let Some(ext) = extension 
     {
         let ext_str: &str = ext.to_str().unwrap();
-
-        if ext_str.contains("osu")
+        if !ext_str.contains("osu")
         {
-            let osu_file: osu_format::OsuFile = read_osu_file(song_file_path);
+            return Vec::new();
         }
     }
 
-    Ok(())
+    let mut paths_to_keep: Vec<PathBuf> = Vec::new();
+    let mut osu_file: osu_format::OsuFile = osu_format::OsuFile::new();
+    osu_file.parse(song_file_path);
+
+    paths_to_keep.push(song_file_clone);
+
+    if osu_file.events_section.background.exists {
+        let background = Path::new(&song_path_clone).join(osu_file.events_section.background.file_name).clone();
+        paths_to_keep.push(background);
+    }
+
+    //TODO: In order to remove vidoes, we also need to clean up the reference inside .osu.
+    // if osu_file.events_section.video.exists {
+    //     let video = Path::new(&song_path_clone).join(osu_file.events_section.video.file_name);
+    //     paths_to_keep.push(video);
+    // }
+
+    let audio = Path::new(&song_path_clone).join(osu_file.general_section.audio_file_name);
+    paths_to_keep.push(audio);
+
+    return paths_to_keep;
 }
 
-fn read_osu_file(osu_path: PathBuf) -> osu_format::OsuFile
+fn strip_option(opt: Option<&str>) -> String
 {
-    let mut file = osu_format::OsuFile::new();
-    file.parse(osu_path);
-    return file;
+    if let Some(stripped) = opt {
+        return stripped.to_owned();
+    }
+
+    return String::new();
+}
+
+fn create_shadow(osu_path: PathBuf, song_folder: PathBuf, keep: Vec<PathBuf>)
+{
+    let shadow = Path::new(&osu_path).join("Shadow");
+    let osu = Path::new(&osu_path).join("Songs");
+
+    let shadow_str: String = strip_option(shadow.to_str());
+    let osu_str: String = strip_option(osu.to_str());
+    let song_str: String = strip_option(song_folder.to_str());
+
+    let new_str = song_str.replace(&osu_str, &shadow_str);
+    let new_path = Path::new(&new_str);
+
+    if !new_path.exists() {
+        match fs::create_dir_all(new_path)
+        {
+            Ok(_) => { println!("Created shadow directory: {}", new_str) },
+            Err(e) => { println!("Failed to create shadow directory: {}", e)}
+        }
+    }
+
+    for file in keep {
+        let mut file_str = strip_option(file.to_str());
+        file_str = file_str.replace(&osu_str, &shadow_str);
+        let file_path = Path::new(&file_str);
+
+        match fs::copy(file, file_path)      
+        {
+            Ok(_) => { println!("Created copy to shadow: {}", file_str) },
+            Err(e) => { println!("Failed to create copy to shadow: {}", e)}
+        }
+    }
+
+    println!("Old: {}, New: {}", song_str, new_str);
 }

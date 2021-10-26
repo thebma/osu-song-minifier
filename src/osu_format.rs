@@ -167,6 +167,7 @@ pub struct OFSectionDifficulty
 #[derive(Default, Clone, Debug)]
 pub struct OFSectionVideo
 {
+    pub exists: bool,
     pub start_time: i32,
     pub file_name: String,
     pub x_offset: i32,
@@ -176,6 +177,7 @@ pub struct OFSectionVideo
 #[derive(Default, Clone, Debug)]
 pub struct OFSectionBackground 
 {
+    pub exists: bool,
     pub file_name: String,
     pub x_offset: i32,
     pub y_offset: i32,
@@ -469,6 +471,7 @@ impl OsuFile
             let y_offset = if line_split.len() == 5 { line_split[4].parse::<i32>().unwrap() } else { 0 };
             
             section.background = OFSectionBackground {
+                exists: true, 
                 file_name: file,
                 x_offset: x_offset,
                 y_offset: y_offset
@@ -483,6 +486,7 @@ impl OsuFile
             let y_offset = if line_split.len() == 5 { line_split[4].parse::<i32>().unwrap() } else { 0 };
             
             section.video = OFSectionVideo {
+                exists: true, 
                 start_time: start_time,
                 file_name: file,
                 x_offset: x_offset,
