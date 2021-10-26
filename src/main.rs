@@ -1,4 +1,5 @@
 mod osu_format;
+mod osu_detect;
 
 use std::fs;
 use std::io;
@@ -9,10 +10,6 @@ use std::time::{Instant};
     General todo's for this application:
     - Properly handle Option<> / Error handling on IO errors.
       Unwrapping and praying for the best is the current approach, which arguebly is not the most bulletproof :)
-
-    - Automatically scan for the installation location for Osu!.
-      The .osu file handler should contain the path.
-
     - Optionally zip the entire cleaned directory for passing around.
     - Deduplicate the directory indexing.
     - Do general testing and see how my code breaks.
@@ -22,14 +19,10 @@ fn main()
     let start = Instant::now(); 
     let mut root: String = String::new();
 
-    //detect: HKEY_CLASSES_ROOT\osu\shell\open\command
-    if true { //if laptop...
-        root = String::from("M:\\Games\\Osu");
-    }
-    else {
-        root = String::from("D:\\Games\\Osu");
-    }
-    
+    match osu_detect::where_is_osu() {
+        Ok(v) => { root = v; },
+        Err(_) => { println!("Unable to locate Osu! install path."); }
+    };
     
     let songs_path: PathBuf = Path::new(&root).join("Songs");
     if songs_path.exists() {
@@ -82,7 +75,6 @@ fn process_song(song_path: PathBuf) -> Result<(), io::Error>
 
     Ok(())
 }
-
 
 ///
 /// Find critical files to keep within a song directory.
