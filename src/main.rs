@@ -1,7 +1,7 @@
 mod osu_format;
 mod osu_detect;
 
-use std::fs;
+use std::{fs, io};
 use std::path::{Path, PathBuf};
 use std::time::{Instant};
 
@@ -26,49 +26,64 @@ fn main()
     
     let songs_path: PathBuf = Path::new(&root).join("Songs");
 
-    if songs_path.exists() {
-        iterate_songs(songs_path);
+    if songs_path.exists() 
+    {
+        match iterate_songs(songs_path)
+        {
+            Ok(_) => { println!("Successfully parsed Osu! directory.")},
+            Err(err) => { panic!("Failed to parse you Osu! directory, error: {}", err)}
+        }
+    }
+    else
+    {
+        panic!("We found an Osu! directory, but it does not contain a Songs folder. Do you have a partial installation?");
     }
 
     let time = Instant::now().saturating_duration_since(start).as_secs_f32();
     println!("Execution time: {} seconds", time);
 }
 
-fn recurse_directory(path: PathBuf, predicate: impl Fn(PathBuf) -> bool, callback: impl Fn(PathBuf))
+fn recurse_directory(
+    path: PathBuf, 
+    predicate: impl Fn(PathBuf) -> bool, 
+    callback: impl Fn(PathBuf) -> Result<(), io::Error>
+) -> Result<(), io::Error>
 {
-    for entry in fs::read_dir(path).unwrap()
+    for entry in fs::read_dir(path)?
     {
-        let entry: fs::DirEntry = entry.unwrap();
+        let entry: fs::DirEntry = entry?;
         let path = entry.path();
         
         if predicate(path.clone()) {
-            callback(path.clone());
+            callback(path.clone())?;
         }
     }
+
+    Ok(())
 }
 
-fn iterate_songs(songs_folder: PathBuf)
+fn iterate_songs(songs_folder: PathBuf) -> Result<(), io::Error>
 {
     recurse_directory(songs_folder,
         | path | { path.exists() && path.is_dir() },
-        | path | { evaluate_song(path); }
-    );
+        | path | { evaluate_song(path) }
+    )
 }
 
-fn evaluate_song(song_path: PathBuf)
+fn evaluate_song(song_path: PathBuf) -> Result<(), io::Error>
 {
-    iterate_song_files(song_path);
+    iterate_song_files(song_path)
 }
 
-fn iterate_song_files(song_path: PathBuf)
+fn iterate_song_files(song_path: PathBuf) -> Result<(), io::Error>
 {
     recurse_directory(song_path,
         | path | { path.exists() && path.is_file() },
-        | path | { evaluate_song_files(path); }
-    );
+        | path | { evaluate_song_files(path) }
+    )
 }
 
-fn evaluate_song_files(song_file_path: PathBuf)
+fn evaluate_song_files(song_file_path: PathBuf) -> Result<(), io::Error>
 {
     let extension = song_file_path.extension();
 
@@ -78,23 +93,16 @@ fn evaluate_song_files(song_file_path: PathBuf)
 
         if ext_str.contains("osu")
         {
-            find_critical_files(song_file_path);
+            let osu_file: osu_format::OsuFile = read_osu_file(song_file_path);
         }
     }
+
+    Ok(())
 }
 
-///
-/// Find critical files to keep within a song directory.
-/// osu_path is the .osu file with in a song directory, this contains the metadata what the background and audio files are.
-/// Returns a list of files to keep.
-/// 
-fn find_critical_files(osu_path: PathBuf)
+fn read_osu_file(osu_path: PathBuf) -> osu_format::OsuFile
 {
-    let mut files_to_keep: Vec<String> = Vec::new();
     let mut file = osu_format::OsuFile::new();
     file.parse(osu_path);
-
-    println!("Audio file is {}", file.general_section.audio_file_name);
-    println!("Background file is {:?}", file.events_section.background);
-    println!("Video file is {:?}", file.events_section.video);
+    return file;
 }
