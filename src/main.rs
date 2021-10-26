@@ -20,8 +20,17 @@ use std::time::{Instant};
 fn main() 
 {
     let start = Instant::now(); 
+    let mut root: String = String::new();
 
-    let root: String = String::from("D:\\Games\\Osu");
+    //detect: HKEY_CLASSES_ROOT\osu\shell\open\command
+    if true { //if laptop...
+        root = String::from("M:\\Games\\Osu");
+    }
+    else {
+        root = String::from("D:\\Games\\Osu");
+    }
+    
+    
     let songs_path: PathBuf = Path::new(&root).join("Songs");
     if songs_path.exists() {
         recurse_songs(songs_path).unwrap()
@@ -86,9 +95,9 @@ fn find_critical_files(osu_path: PathBuf)  -> Result<Vec<String>, io::Error>
     let mut file = osu_format::OsuFile::new();
     file.parse(osu_path);
 
-    println!("Audio file is {}", file.general_section.audio_file_name);
-    println!("Background file is {:?}", file.events_section.background);
-    println!("Video file is {:?}", file.events_section.video);
+    // println!("Audio file is {}", file.general_section.audio_file_name);
+    // println!("Background file is {:?}", file.events_section.background);
+    // println!("Video file is {:?}", file.events_section.video);
 
     Ok(files_to_keep)
 }

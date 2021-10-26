@@ -264,45 +264,6 @@ pub struct OsuFile
     pub hit_object_section: OFSectionHitObjects
 }
 
-//TODO: Segregate BOM stuff into a dedicated file.
-pub struct ByteOrderMark
-{
-    len: u8,
-    byte0: u8,
-    byte1: u8,
-    byte2: u8,
-    byte3: u8,
-}
-
-impl ByteOrderMark
-{
-    fn as_vec(&self) -> Vec<u8>
-    {
-        match self.len {
-            0 => Vec::new(),
-            1 => vec![self.byte0],
-            2 => vec![self.byte0, self.byte1],
-            3 => vec![self.byte0, self.byte1, self.byte2],
-            4 => vec![self.byte0, self.byte1, self.byte2, self.byte3],
-            _ => vec![self.byte0, self.byte1, self.byte2, self.byte3],
-        }
-    }
-}
-
-const BYTE_ORDER_MARKS: &'static [ByteOrderMark; 11] = &[
-    ByteOrderMark { len: 3, byte0: 239, byte1: 187, byte2: 191, byte3: 0},
-    ByteOrderMark { len: 2, byte0: 255, byte1: 254, byte2: 0, byte3: 0},
-    ByteOrderMark { len: 2, byte0: 254, byte1: 254, byte2: 0, byte3: 0},
-    ByteOrderMark { len: 4, byte0: 0, byte1: 0, byte2: 254, byte3: 255},
-    ByteOrderMark { len: 3, byte0: 43, byte1: 47, byte2: 118, byte3: 0},
-    ByteOrderMark { len: 3, byte0: 247, byte1: 100, byte2: 76, byte3: 0},
-    ByteOrderMark { len: 4, byte0: 221, byte1: 115, byte2: 102, byte3: 115},
-    ByteOrderMark { len: 3, byte0: 14, byte1: 254, byte2: 255, byte3: 0},
-    ByteOrderMark { len: 3, byte0: 251, byte1: 238, byte2: 40, byte3: 0},
-    ByteOrderMark { len: 4, byte0: 132, byte1: 49, byte2: 149, byte3: 51},
-    ByteOrderMark { len: 4, byte0: 254, byte1: 255, byte2: 0, byte3: 0}
-];
-
 impl OsuFile
 {
     pub fn new() -> OsuFile
@@ -310,54 +271,15 @@ impl OsuFile
         OsuFile::default()
     }
 
-    fn trim_bom(&mut self, line: String) -> String
-    {
-        let line_bytes: Vec<u8> = line.bytes().collect();
-
-        for bom in BYTE_ORDER_MARKS 
-        {
-            let bom_bytes = bom.as_vec();
-            let mut found_bom = true;
-
-            for n in 0..bom.len as usize
-            {
-                if line_bytes.get(n) != bom_bytes.get(n)
-                {
-                    found_bom = false;
-                    break;
-                }
-            }
-
-            if found_bom 
-            {
-                let line_bytes_without_bom: Vec<u8> = line_bytes
-                    .clone()
-                    .into_iter()
-                    .skip(bom.len as usize)
-                    .take(line.len() - (bom.len as usize))
-                    .collect();
-           
-                match std::str::from_utf8(&line_bytes_without_bom[..]) 
-                {
-                    Ok(v) => { return v.to_owned(); }
-                    Err(_) => { panic!("Could not remove BOM, call 911 to request an EOD squad."); }
-                }
-            }
-        }
-
-        return line;
-    }
-
     fn parse_version(&mut self, line: String, error: &mut String)
     {
-        let line_no_bom: String = self.trim_bom(line);
-        
-        if !line_no_bom.starts_with("osu file format") {
+        if !line.contains("osu file format") {
             error.push_str("File does not contain a version header.");
             return;
         }
 
-        self.version = line_no_bom.trim().to_owned();
+        self.version = line.trim().to_owned();
+        println!("{}", self.version);
     }
 
     fn get_key_value(&mut self, line: String) -> (bool, String, String)
