@@ -189,20 +189,24 @@ pub struct OsuFileTimingPoints
     //TODO: Parse timinig points.
 }
 
-
 #[derive(Default, Clone, Debug)]
 pub struct OsuFileColors 
 {
-    pub colours: Vec<OsuFileColor>,
+    pub combo_colors: Vec<OsuFileCombo>,
     pub slider_border: OsuFileColor,
     pub slider_track_override: OsuFileColor,
-    pub my_life_is_meaning_less: String
+}
+
+#[derive(Default, Clone, Debug)]
+pub struct OsuFileCombo
+{
+    pub index: i8,
+    pub color: OsuFileColor
 }
 
 #[derive(Default, Clone, Debug)]
 pub struct OsuFileColor
 {
-    pub index: i8,
     pub red: u8,
     pub blue: u8,
     pub green: u8
@@ -210,18 +214,16 @@ pub struct OsuFileColor
 
 impl OsuFileColor
 {
-    pub fn from_str(input: String, index: i8) -> Result<OsuFileColor, String>
+    pub fn from_str(input: String) -> Result<OsuFileColor, String>
     {
-        //TODO: Find a better way to assign indices, generalize this behaviour being independant from "index".
         let rgb: Vec<&str> = input.split(",").collect();
 
         if rgb.len() != 3 
         {
-            return Err(String::from("string did not have the rgb component(s)"))
+            return Err(String::from("Given string does not represent a color."))
         }
 
         Ok(OsuFileColor { 
-            index: index,
             red: rgb[0].parse::<u8>().unwrap(), 
             green: rgb[1].parse::<u8>().unwrap(), 
             blue: rgb[2].parse::<u8>().unwrap()

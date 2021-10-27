@@ -9,6 +9,7 @@ use half::{ f16 };
 use data::{
     OsuFile,
     OsuFileBackground,
+    OsuFileCombo,
     OsuFileColor,
     OsuFileVideo,
     OsuFileSampleSet,
@@ -277,19 +278,21 @@ impl OsuFile
             {
                 let num: String = key.replace("Combo", "");
                 let index = num.parse::<i8>().unwrap();
-    
-                match OsuFileColor::from_str(value, index) {
-                    Ok(v) => { section.colours.push(v); },
-                    Err(e) => { println!("Converting value from string failed: {}", e)}
+
+                if let Ok(color) = OsuFileColor::from_str(value)
+                {
+                    section.combo_colors.push(OsuFileCombo { 
+                        index: index, color: color
+                    });
                 }
             }
             else if key.starts_with("SliderBorder")
             {
-                section.slider_border = OsuFileColor::from_str(value, -1).unwrap();
+                section.slider_border = OsuFileColor::from_str(value).unwrap();
             }
             else if key.starts_with("SliderTrackOverride")
             {
-                section.slider_track_override = OsuFileColor::from_str(value, -1).unwrap();
+                section.slider_track_override = OsuFileColor::from_str(value).unwrap();
             }
             else
             {
