@@ -8,3 +8,4 @@ edition = "2018"
 [dependencies]
 regex = "1"
 winreg = "0.10.1"
+half = "1.8.2"

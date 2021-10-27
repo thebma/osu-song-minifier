@@ -1,4 +1,5 @@
 use std::str::FromStr;
+use half::{ f16 };
 
 #[repr(u32)] #[derive(Clone, Debug)]
 pub enum OsuFileGamemode
@@ -114,7 +115,7 @@ pub struct OsuFileGeneral
 #[derive(Default, Clone, Debug)]
 pub struct OsuFileEditor 
 {
-    pub bookmarks: String,
+    pub bookmarks: String, //TODO: Make this a comma seperated value class.
     pub distance_spacing: f32,
     pub beat_divisor: f32,
     pub grid_size: u32,
@@ -131,7 +132,7 @@ pub struct OsuFileMetadata
     pub creator: String,
     pub version: String,
     pub source: String,
-    pub tags: String, //TODO: Make this a OsuFileTagsCollection.
+    pub tags: String, //TODO: Make this a comma seperated value class.
     pub beatmap_id: i64,
     pub beatmap_set_id: i64,
 }
@@ -139,14 +140,12 @@ pub struct OsuFileMetadata
 #[derive(Default, Clone, Debug)]
 pub struct OsuFileDifficulty 
 {
-    //TODO: 32-bit float might be excessive, in-game it's represented as a 0 to 10 decimal with 2 decimal places.
-    //      Half (f16) of even quaters (f8) would do the job and would require subsequent crates to be imported.
-    pub hp_drain_rate: f32,
-    pub circle_size: f32,
-    pub overall_difficulty: f32,
-    pub approach_rate: f32,
-    pub slider_multiplier: f32,
-    pub slider_tick_rate: f32,
+    pub hp_drain_rate: f16,
+    pub circle_size: f16,
+    pub overall_difficulty: f16,
+    pub approach_rate: f16,
+    pub slider_multiplier: f16,
+    pub slider_tick_rate: f16,
 }
 
 #[derive(Default, Clone, Debug)]

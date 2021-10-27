@@ -4,6 +4,7 @@ use std::io::{BufRead, BufReader};
 use std::fs::File;
 use std::path::PathBuf;
 use std::str::FromStr;
+use half::{ f16 };
 
 use data::{
     OsuFile,
@@ -19,7 +20,7 @@ use data::{
 /// General todo's for this file:
 /// - Ensure safe conversion OsuFile string -> i8/u8/u32/i32/f32/enum.
 ///   Move this to a util file, to deduplictate the code and some extra for error handling.
-///   Perhaps we need to resort to unions, explore options to see what is easier (i.e. nested structs vs. union)
+/// - Perhaps we need to resort to unions, explore options to see what is easier (i.e. nested structs vs. union)
 /// 
 impl OsuFile
 {
@@ -187,16 +188,16 @@ impl OsuFile
             let mut section = self.difficulty_section.clone();
             
             //TODO: generalize these functions.
-            let as_f32 = || -> f32 { value.parse::<f32>().unwrap() };
+            let as_f16 = || -> f16 { f16::from_f32(value.parse::<f32>().unwrap()) };
             
             match key.as_ref()
             {
-                "HPDrainRate" => { section.hp_drain_rate = as_f32(); },
-                "CircleSize" => { section.circle_size = as_f32(); },
-                "OverallDifficulty" => { section.overall_difficulty = as_f32(); },
-                "ApproachRate" => { section.approach_rate = as_f32(); },
-                "SliderMultiplier" => { section.slider_multiplier = as_f32(); },
-                "SliderTickRate" => { section.slider_tick_rate= as_f32(); },
+                "HPDrainRate" => { section.hp_drain_rate = as_f16(); },
+                "CircleSize" => { section.circle_size = as_f16(); },
+                "OverallDifficulty" => { section.overall_difficulty = as_f16(); },
+                "ApproachRate" => { section.approach_rate = as_f16(); },
+                "SliderMultiplier" => { section.slider_multiplier = as_f16(); },
+                "SliderTickRate" => { section.slider_tick_rate= as_f16(); },
                 _ => { println!("Unknown field {} inside difficulty section with value: {}", key, value); }
             }
 
