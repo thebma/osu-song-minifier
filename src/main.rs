@@ -5,6 +5,8 @@ use std::{fs, io};
 use std::path::{Path, PathBuf};
 use std::time::{Instant};
 
+use osu_format::data::OsuFile;
+
 /*
     General todo's for this application:
     - Properly handle Option<> / Error handling on IO errors.
@@ -119,7 +121,7 @@ fn evaluate_song_files(song_path: PathBuf, song_file_path: PathBuf) -> Vec<PathB
     }
 
     let mut paths_to_keep: Vec<PathBuf> = Vec::new();
-    let mut osu_file: osu_format::OsuFile = osu_format::OsuFile::new();
+    let mut osu_file: OsuFile = OsuFile::new();
     osu_file.parse(song_file_path);
 
     paths_to_keep.push(song_file_clone);
