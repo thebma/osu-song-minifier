@@ -1,7 +1,7 @@
 use std::str::FromStr;
 
 #[repr(u32)] #[derive(Clone, Debug)]
-pub enum OFGameMode
+pub enum OsuFileGamemode
 {
     Unknown = u32::MAX,
     Osu = 0,
@@ -10,28 +10,28 @@ pub enum OFGameMode
     Mania = 3
 }
 
-impl Default for OFGameMode
+impl Default for OsuFileGamemode
 {
-    fn default() -> Self { OFGameMode::Osu }
+    fn default() -> Self { OsuFileGamemode::Osu }
 }
 
-impl OFGameMode
+impl OsuFileGamemode
 {
-    pub fn from_u32(integer: u32) -> OFGameMode
+    pub fn from_u32(integer: u32) -> OsuFileGamemode
     {
         match integer
         {
-            0 => OFGameMode::Osu,
-            1 => OFGameMode::Taiko,
-            2 => OFGameMode::Catch,
-            3 => OFGameMode::Mania,
-            _ => OFGameMode::Unknown
+            0 => OsuFileGamemode::Osu,
+            1 => OsuFileGamemode::Taiko,
+            2 => OsuFileGamemode::Catch,
+            3 => OsuFileGamemode::Mania,
+            _ => OsuFileGamemode::Unknown
         }
     }
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum OFSampleSet
+pub enum OsuFileSampleSet
 {
     Normal,
     Soft,
@@ -39,71 +39,71 @@ pub enum OFSampleSet
     None,
 }
 
-impl Default for OFSampleSet 
+impl Default for OsuFileSampleSet 
 {
-    fn default() -> Self { OFSampleSet::Normal }
+    fn default() -> Self { OsuFileSampleSet::Normal }
 }
 
-impl FromStr for OFSampleSet
+impl FromStr for OsuFileSampleSet
 {
     type Err = String;
 
-    fn from_str(input: &str) -> Result<OFSampleSet, Self::Err> 
+    fn from_str(input: &str) -> Result<OsuFileSampleSet, Self::Err> 
     {
         match input.to_ascii_lowercase().as_str() 
         {
-            "normal" => Ok(OFSampleSet::Normal),
-            "soft" => Ok(OFSampleSet::Soft),
-            "drum" => Ok(OFSampleSet::Drum),
-            "none" => Ok(OFSampleSet::Normal),
-            _ => Ok(OFSampleSet::None)
+            "normal" => Ok(OsuFileSampleSet::Normal),
+            "soft" => Ok(OsuFileSampleSet::Soft),
+            "drum" => Ok(OsuFileSampleSet::Drum),
+            "none" => Ok(OsuFileSampleSet::Normal),
+            _ => Ok(OsuFileSampleSet::None)
         }
     }
 }
 
 #[derive(Clone, Debug)]
-pub enum OFOverlayPosition
+pub enum OsuFileOverlayPosition
 {
     NoChange, 
     Below, 
     Above
 }
 
-impl FromStr for OFOverlayPosition
+impl FromStr for OsuFileOverlayPosition
 {
     type Err = String;
 
-    fn from_str(input: &str) -> Result<OFOverlayPosition, Self::Err>
+    fn from_str(input: &str) -> Result<OsuFileOverlayPosition, Self::Err>
     {
         match input.to_ascii_lowercase().as_str() 
         {
-            "nochange" => Ok(OFOverlayPosition::NoChange),
-            "below" => Ok(OFOverlayPosition::Below),
-            "above" => Ok(OFOverlayPosition::Above),
+            "nochange" => Ok(OsuFileOverlayPosition::NoChange),
+            "below" => Ok(OsuFileOverlayPosition::Below),
+            "above" => Ok(OsuFileOverlayPosition::Above),
             _ => Err(format!("Cannot convert {} to an OFSampleSet enum.", input)),
         }
     }
 }
 
-impl Default for OFOverlayPosition
+impl Default for OsuFileOverlayPosition
 {
-    fn default() -> Self { OFOverlayPosition::NoChange }
+    fn default() -> Self { OsuFileOverlayPosition::NoChange }
 }
 
 #[derive(Default, Clone, Debug)]
-pub struct OFSectionGeneral 
+pub struct OsuFileGeneral 
 {
     pub audio_file_name: String,
     pub audio_lead_in: i32,
     pub preview_time: i32,
     pub countdown: u32,
-    pub sample_set: OFSampleSet,
+    pub sample_set: OsuFileSampleSet,
     pub stack_leniency: f32,
-    pub mode: OFGameMode,
+    pub mode: OsuFileGamemode,
     pub letterbox_in_breaks: bool,
     pub use_skin_sprites: bool,
     pub skin_preference: String,
-    pub overlay_position: OFOverlayPosition,
+    pub overlay_position: OsuFileOverlayPosition,
     pub epilepsy_warning: bool,
     pub countdown_offset: u32,
     pub special_style: bool,
@@ -112,7 +112,7 @@ pub struct OFSectionGeneral
 }
 
 #[derive(Default, Clone, Debug)]
-pub struct OFSectionEditor 
+pub struct OsuFileEditor 
 {
     pub bookmarks: String,
     pub distance_spacing: f32,
@@ -122,7 +122,7 @@ pub struct OFSectionEditor
 }
 
 #[derive(Default, Clone, Debug)]
-pub struct OFSectionMetadata 
+pub struct OsuFileMetadata 
 {
     pub title: String,
     pub title_unicode: String,
@@ -131,13 +131,13 @@ pub struct OFSectionMetadata
     pub creator: String,
     pub version: String,
     pub source: String,
-    pub tags: String, //TODO: Make this a OFSectionTagsCollection.
+    pub tags: String, //TODO: Make this a OsuFileTagsCollection.
     pub beatmap_id: i64,
     pub beatmap_set_id: i64,
 }
 
 #[derive(Default, Clone, Debug)]
-pub struct OFSectionDifficulty 
+pub struct OsuFileDifficulty 
 {
     //TODO: 32-bit float might be excessive, in-game it's represented as a 0 to 10 decimal with 2 decimal places.
     //      Half (f16) of even quaters (f8) would do the job and would require subsequent crates to be imported.
@@ -150,7 +150,7 @@ pub struct OFSectionDifficulty
 }
 
 #[derive(Default, Clone, Debug)]
-pub struct OFSectionVideo
+pub struct OsuFileVideo
 {
     pub exists: bool,
     pub start_time: i32,
@@ -160,7 +160,7 @@ pub struct OFSectionVideo
 }
 
 #[derive(Default, Clone, Debug)]
-pub struct OFSectionBackground 
+pub struct OsuFileBackground 
 {
     pub exists: bool,
     pub file_name: String,
@@ -169,29 +169,39 @@ pub struct OFSectionBackground
 }
 
 #[derive(Default, Clone, Debug)]
-pub struct OFSectionBreakPeriod
+pub struct OsuFileBreakPeriod
 {
     pub start: u32,
     pub end: u32,
 }
 
 #[derive(Default, Clone, Debug)]
-pub struct OFSectionEvents 
+pub struct OsuFileEvents 
 {
-    pub background: OFSectionBackground,
-    pub video: OFSectionVideo,
-    pub breaks: Vec<OFSectionBreakPeriod>,
+    pub background: OsuFileBackground,
+    pub video: OsuFileVideo,
+    pub breaks: Vec<OsuFileBreakPeriod>,
     //TODO: Do the storyboard crap.
 }
 
 #[derive(Default, Clone, Debug)]
-pub struct OFSectionTimingPoints 
+pub struct OsuFileTimingPoints 
 {
     //TODO: Parse timinig points.
 }
 
+
 #[derive(Default, Clone, Debug)]
-pub struct OFSectionColour
+pub struct OsuFileColors 
+{
+    pub colours: Vec<OsuFileColor>,
+    pub slider_border: OsuFileColor,
+    pub slider_track_override: OsuFileColor,
+    pub my_life_is_meaning_less: String
+}
+
+#[derive(Default, Clone, Debug)]
+pub struct OsuFileColor
 {
     pub index: i8,
     pub red: u8,
@@ -199,9 +209,9 @@ pub struct OFSectionColour
     pub green: u8
 }
 
-impl OFSectionColour 
+impl OsuFileColor
 {
-    pub fn from_str(input: String, index: i8) -> Result<OFSectionColour, String>
+    pub fn from_str(input: String, index: i8) -> Result<OsuFileColor, String>
     {
         //TODO: Find a better way to assign indices, generalize this behaviour being independant from "index".
         let rgb: Vec<&str> = input.split(",").collect();
@@ -211,7 +221,7 @@ impl OFSectionColour
             return Err(String::from("string did not have the rgb component(s)"))
         }
 
-        Ok(OFSectionColour { 
+        Ok(OsuFileColor { 
             index: index,
             red: rgb[0].parse::<u8>().unwrap(), 
             green: rgb[1].parse::<u8>().unwrap(), 
@@ -221,32 +231,23 @@ impl OFSectionColour
 }
 
 #[derive(Default, Clone, Debug)]
-pub struct OFSectionColours 
-{
-    pub colours: Vec<OFSectionColour>,
-    pub slider_border: OFSectionColour,
-    pub slider_track_override: OFSectionColour,
-    pub my_life_is_meaning_less: String
-}
-
-#[derive(Default, Clone, Debug)]
-pub struct OFSectionHitObjects  
+pub struct OsuFileHitObjects  
 {
     //TODO: Parse hit objects.
 }
 
-//TODO: Support deprecated variables.
+//TODO: Support deprecated variables, turns out some old map still have them.
 //TODO: Specialize some of the structs, instead of using generic collections.
 #[derive(Default, Clone, Debug)]
 pub struct OsuFile
 {
     pub version: String,
-    pub general_section: OFSectionGeneral,
-    pub editor_section: OFSectionEditor,
-    pub metadata_section: OFSectionMetadata,
-    pub difficulty_section: OFSectionDifficulty,
-    pub events_section: OFSectionEvents,
-    pub timing_points_section: OFSectionTimingPoints,
-    pub colours_section: OFSectionColours,
-    pub hit_object_section: OFSectionHitObjects
+    pub general_section: OsuFileGeneral,
+    pub editor_section: OsuFileEditor,
+    pub metadata_section: OsuFileMetadata,
+    pub difficulty_section: OsuFileDifficulty,
+    pub events_section: OsuFileEvents,
+    pub timing_points_section: OsuFileTimingPoints,
+    pub colours_section: OsuFileColors,
+    pub hit_object_section: OsuFileHitObjects
 }

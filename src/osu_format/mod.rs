@@ -6,20 +6,22 @@ use std::path::PathBuf;
 use std::str::FromStr;
 
 use data::{
-    OsuFile, 
-    OFSectionBackground, OFSectionColour, OFSectionVideo,
-    OFSampleSet, OFGameMode, OFOverlayPosition
+    OsuFile,
+    OsuFileBackground,
+    OsuFileColor,
+    OsuFileVideo,
+    OsuFileSampleSet,
+    OsuFileGamemode,
+    OsuFileOverlayPosition
 };
 
 ///
 /// General todo's for this file:
-/// - Ensure safe conversion of string -> i8/u8/u32/i32/f32/enum.
+/// - Ensure safe conversion OsuFile string -> i8/u8/u32/i32/f32/enum.
 ///   Move this to a util file, to deduplictate the code and some extra for error handling.
 /// - Use Result(T, R) for functions instead of passing an referenced error variable.
 ///   Perhaps we need to resort to unions, explore options to see what is easier (i.e. nested structs vs. union)
 /// - Generalize the parse_* functions, deduplicate the code.
-/// - Break this file up into 2 other files: osu_format_data.rs and osu_format_util (for BOM stuff).
-/// - Get rid of the horrible "OsuFilesSection" aka "OFSection" prefixes.
 /// 
 impl OsuFile
 {
@@ -81,9 +83,9 @@ impl OsuFile
         let as_i32 = || -> i32 { value.parse::<i32>().unwrap() };
         let as_f32 = || -> f32 { value.parse::<f32>().unwrap() };
         let as_bool = || -> bool { if value == "1"  { true } else { false } };
-        let as_sample_set = || -> OFSampleSet { OFSampleSet::from_str(&value).unwrap() };
-        let as_game_mode = || -> OFGameMode { OFGameMode::from_u32(as_u32()) };
-        let as_overlay = || -> OFOverlayPosition { OFOverlayPosition::from_str(&value).unwrap()};
+        let as_sample_set = || -> OsuFileSampleSet { OsuFileSampleSet::from_str(&value).unwrap() };
+        let as_game_mode = || -> OsuFileGamemode { OsuFileGamemode::from_u32(as_u32()) };
+        let as_overlay = || -> OsuFileOverlayPosition { OsuFileOverlayPosition::from_str(&value).unwrap()};
 
         match key.as_ref()
         {
@@ -220,7 +222,7 @@ impl OsuFile
             let x_offset = if line_split.len() == 4 { line_split[3].parse::<i32>().unwrap() } else { 0 };
             let y_offset = if line_split.len() == 5 { line_split[4].parse::<i32>().unwrap() } else { 0 };
             
-            section.background = OFSectionBackground {
+            section.background = OsuFileBackground {
                 exists: true, 
                 file_name: file,
                 x_offset: x_offset,
@@ -235,7 +237,7 @@ impl OsuFile
             let x_offset = if line_split.len() == 4 { line_split[3].parse::<i32>().unwrap() } else { 0 };
             let y_offset = if line_split.len() == 5 { line_split[4].parse::<i32>().unwrap() } else { 0 };
             
-            section.video = OFSectionVideo {
+            section.video = OsuFileVideo {
                 exists: true, 
                 start_time: start_time,
                 file_name: file,
@@ -271,18 +273,18 @@ impl OsuFile
             let num: String = key.replace("Combo", "");
             let index = num.parse::<i8>().unwrap();
 
-            match OFSectionColour::from_str(value, index) {
+            match OsuFileColor::from_str(value, index) {
                 Ok(v) => { section.colours.push(v); },
                 Err(e) => { println!("Converting value from string failed: {}", e)}
             }
         }
         else if key.starts_with("SliderBorder")
         {
-            section.slider_border = OFSectionColour::from_str(value, -1).unwrap();
+            section.slider_border = OsuFileColor::from_str(value, -1).unwrap();
         }
         else if key.starts_with("SliderTrackOverride")
         {
-            section.slider_track_override = OFSectionColour::from_str(value, -1).unwrap();
+            section.slider_track_override = OsuFileColor::from_str(value, -1).unwrap();
         }
         else if key.starts_with("MyLifeIsMeaningless")
         {
