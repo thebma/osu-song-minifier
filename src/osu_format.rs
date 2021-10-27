@@ -6,8 +6,8 @@ use std::str::FromStr;
 ///
 /// General todo's for this file:
 /// - Ensure safe conversion of string -> i8/u8/u32/i32/f32/enum.
+///   Move this to a util file, to deduplictate the code and some extra for error handling.
 /// - Use Result(T, R) for functions instead of passing an referenced error variable.
-/// - Simplification of OsuFile instantation, can we get rid of the "Default::default();" calls?
 ///   Perhaps we need to resort to unions, explore options to see what is easier (i.e. nested structs vs. union)
 /// - Generalize the parse_* functions, deduplicate the code.
 /// - Break this file up into 2 other files: osu_format_data.rs and osu_format_util (for BOM stuff).
@@ -273,14 +273,15 @@ impl OsuFile
         OsuFile::default()
     }
 
-    fn parse_version(&mut self, line: String, error: &mut String)
+    fn parse_version(&mut self, line: String) -> Result<(), String>
     {
-        if !line.contains("osu file format") {
-            error.push_str("File does not contain a version header.");
-            return;
+        if !line.contains("osu file format") 
+        {
+            return Err("File does not contain a version number.".to_owned());
         }
 
         self.version = line.trim().to_owned();
+        Ok(())
     }
 
     fn get_key_value(&mut self, line: String) -> (bool, String, String)
@@ -309,15 +310,13 @@ impl OsuFile
         return (valid, key, value); 
     }
 
-    fn parse_general(&mut self, line: String, error: &mut String)
+    fn parse_general(&mut self, line: String) -> Result<(), String>
     {
         let (found, key, value) = self.get_key_value(line.clone());
 
         if !found
         {
-            let message = format!("invalid key-value pair for line {} in section Editor", line);
-            error.push_str(&message);
-            return;
+            return Err(format!("invalid key-value pair for line {} in section Editor", line));
         }
 
         let mut section = self.general_section.clone();
@@ -353,17 +352,17 @@ impl OsuFile
         }
 
         self.general_section = section;
+
+        Ok(())
     }
 
-    fn parse_editor(&mut self, line: String, error: &mut String)
+    fn parse_editor(&mut self, line: String) -> Result<(), String>
     {
         let (found, key, value) = self.get_key_value(line.clone());
 
         if !found
         {
-            let message = format!("invalid key-value pair for line {} in section Editor", line);
-            error.push_str(&message);
-            return;
+            return Err(format!("invalid key-value pair for line {} in section Editor", line));
         }
 
         let mut section = self.editor_section.clone();
@@ -383,22 +382,20 @@ impl OsuFile
         }
 
         self.editor_section = section;
+        Ok(())
     }
 
-    fn parse_metadata(&mut self, line: String, error: &mut String)
+    fn parse_metadata(&mut self, line: String) -> Result<(), String>
     {
         let (found, key, value) = self.get_key_value(line.clone());
         
         if !found
         {
-            let message = format!("invalid key-value pair for line {} in section Metadata", line);
-            error.push_str(&message);
-            return;
+            return Err(format!("invalid key-value pair for line {} in section Metadata", line))
         }
         
         let mut section = self.metadata_section.clone();
 
-        
         //TODO: generalize these functions.
         let as_i64 = || -> i64 { value.parse::<i64>().unwrap() };
         
@@ -418,17 +415,16 @@ impl OsuFile
         }
 
         self.metadata_section = section;
+        Ok(())
     }
 
-    fn parse_difficulty(&mut self, line: String, error: &mut String)
+    fn parse_difficulty(&mut self, line: String) -> Result<(), String>
     {
         let (found, key, value) = self.get_key_value(line.clone());
         
         if !found
         {
-            let message = format!("invalid key-value pair for line {} in section Difficulty", line);
-            error.push_str(&message);
-            return;
+            return Err(format!("invalid key-value pair for line {} in section Difficulty", line));
         }
         
         let mut section = self.difficulty_section.clone();
@@ -448,17 +444,16 @@ impl OsuFile
         }
 
         self.difficulty_section = section;
+        Ok(())
     }
 
-    fn parse_events(&mut self, line: String, error: &mut String)
+    fn parse_events(&mut self, line: String) -> Result<(), String>
     {
         let line_split: Vec<&str> = line.split(",").collect();
 
         if line_split.len() == 0
         {
-            let message = format!("no csv string provided, got: {}", line);
-            error.push_str(&message);
-            return;
+            return Err(format!("no csv string provided, got: {}", line));
         }
 
         let event_type = line_split[0];
@@ -496,22 +491,22 @@ impl OsuFile
 
         //TODO: parse storyboard.
         self.events_section = section; 
+        Ok(())
     }
 
-    fn parse_timing_points(&self, line: String, error: &mut String)
+    fn parse_timing_points(&self, line: String) -> Result<(), String>
     {
         //TODO: parse hit objects.
+        Ok(())
     }
 
-    fn parse_colours(&mut self, line: String, error: &mut String)
+    fn parse_colours(&mut self, line: String) -> Result<(), String>
     {
         let (found, key, value) = self.get_key_value(line.clone());
 
         if !found
         {
-            let message = format!("invalid key-value pair for line {} in section Colour", line);
-            error.push_str(&message);
-            return;
+            return Err(format!("invalid key-value pair for line {} in section Colour", line))
         }
 
         let mut section = self.colours_section.clone();
@@ -546,10 +541,12 @@ impl OsuFile
         }
 
         self.colours_section = section;
+        Ok(())
     }
 
-    fn parse_hit_objects(&self, line: String, error: &mut String)
+    fn parse_hit_objects(&self, line: String) -> Result<(), String>
     {
+        Ok(())
         //TODO: Parse hit objects.
         //println!("Handle hit objects...")
     }
@@ -557,7 +554,7 @@ impl OsuFile
     pub fn parse(&mut self, file: PathBuf)
     {
         let path = file.clone();
-        println!("Parsing .osu file: {:?}", path);
+        //println!("Parsing .osu file: {:?}", path);
 
         let osu_file = File::open(file)
             .expect("Failed reading .osu file.");
@@ -567,7 +564,8 @@ impl OsuFile
 
         for line_wrap in file_reader.lines()
         {
-            let line: String = line_wrap.unwrap();
+            let line: String = line_wrap.unwrap().clone();
+            let line_copy = line.clone();
 
             if line.trim().is_empty() || line.starts_with("//")
             {
@@ -587,32 +585,28 @@ impl OsuFile
                     .collect();
 
                 if heading.is_empty() { continue; };
-
                 context = heading.to_lowercase();
             }
             else 
             {
-                let mut error: String = String::new();
-
-                match context.as_ref()
+                let result: Result<(), String> = match context.as_ref()
                 {
-                    "" => { self.parse_version(line, &mut error); }
-                    "general" => { self.parse_general(line, &mut error); }
-                    "editor" => { self.parse_editor(line, &mut error); }
-                    "metadata" => { self.parse_metadata(line, &mut error); }
-                    "difficulty" => { self.parse_difficulty(line, &mut error); }
-                    "events" => { self.parse_events(line, &mut error); }
-                    "timingpoints" => { self.parse_timing_points(line, &mut error); }
-                    "colours" => { self.parse_colours(line, &mut error); }
-                    "hitobjects" => { self.parse_hit_objects(line, &mut error); }
-                    _ => { println!("Unknown context: {}", context); }
-                }
+                    "" => self.parse_version(line),
+                    "general" => self.parse_general(line),
+                    "editor" => self.parse_editor(line),
+                    "metadata" => self.parse_metadata(line),
+                    "difficulty" => self.parse_difficulty(line),
+                    "events" => self.parse_events(line),
+                    "timingpoints" => self.parse_timing_points(line),
+                    "colours" => self.parse_colours(line),
+                    "hitobjects" => self.parse_hit_objects(line),
+                    _ => Err(format!("Context {} was not handled.", context), )
+                };
 
-                //TODO: Better error handling, use Rust's std::result::Result method.
-                if !error.is_empty() {
-                    println!("Parsing .osu failed at section '{}', reason: {} on file {:?}", context, error, path);
-                    break;
-                }
+                match result {
+                    Err(err) => { println!("Failed to parse for with error: {}\n\tContext {}\n\tValue {}", err, context, line_copy); }
+                    _ => {},
+                };
             }
         }
     }

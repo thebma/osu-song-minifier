@@ -99,9 +99,7 @@ fn iterate_song_files(osu_path: PathBuf, song_path: PathBuf) -> Result<(), io::E
     keep.sort();
     keep.dedup();
 
-    println!("After {:?}", keep);
-    create_shadow(osu_path, path, keep);
-
+    //create_shadow(osu_path, path, keep);
     Ok(())
 }
     
@@ -130,12 +128,6 @@ fn evaluate_song_files(song_path: PathBuf, song_file_path: PathBuf) -> Vec<PathB
         let background = Path::new(&song_path_clone).join(osu_file.events_section.background.file_name).clone();
         paths_to_keep.push(background);
     }
-
-    //TODO: In order to remove vidoes, we also need to clean up the reference inside .osu.
-    // if osu_file.events_section.video.exists {
-    //     let video = Path::new(&song_path_clone).join(osu_file.events_section.video.file_name);
-    //     paths_to_keep.push(video);
-    // }
 
     let audio = Path::new(&song_path_clone).join(osu_file.general_section.audio_file_name);
     paths_to_keep.push(audio);
@@ -167,7 +159,7 @@ fn create_shadow(osu_path: PathBuf, song_folder: PathBuf, keep: Vec<PathBuf>)
     if !new_path.exists() {
         match fs::create_dir_all(new_path)
         {
-            Ok(_) => { println!("Created shadow directory: {}", new_str) },
+            Ok(_) => {},
             Err(e) => { println!("Failed to create shadow directory: {}", e)}
         }
     }
@@ -179,10 +171,8 @@ fn create_shadow(osu_path: PathBuf, song_folder: PathBuf, keep: Vec<PathBuf>)
 
         match fs::copy(file, file_path)      
         {
-            Ok(_) => { println!("Created copy to shadow: {}", file_str) },
+            Ok(_) => {},
             Err(e) => { println!("Failed to create copy to shadow: {}", e)}
         }
     }
-
-    println!("Old: {}, New: {}", song_str, new_str);
 }
