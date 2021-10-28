@@ -1,6 +1,15 @@
 use std::str::FromStr;
 use half::{ f16 };
 
+///
+/// General todos, fixes and pain points for this file:
+/// 
+/// 
+///
+/// 
+/// 
+/// 
+
 #[repr(u32)] #[derive(Clone, Debug)]
 pub enum OsuFileGamemode
 {

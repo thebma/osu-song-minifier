@@ -17,6 +17,8 @@ use osu_format::data::OsuFile;
         "Destructive" => Delete the files directly from your Songs folder.
         "Copy" => Create a new directory with the files.
         "Zip" => Same as copy, but outputs a zip.
+    - Handle when no Osu! installation was found.
+        Perhaps even offer an manual way of configuring Osu! installation path.
 */
 fn main() 
 {
@@ -84,6 +86,8 @@ fn iterate_songs(osu_path: PathBuf, songs_folder: PathBuf) -> Result<(), io::Err
 
 fn evaluate_song(osu_path: PathBuf, song_path: PathBuf) -> Result<(), io::Error>
 {
+    println!("Parsing song: {:?}", song_path);
+
     Ok(iterate_song_files(osu_path, song_path)?)
 }
 
@@ -101,7 +105,7 @@ fn iterate_song_files(osu_path: PathBuf, song_path: PathBuf) -> Result<(), io::E
     keep.sort();
     keep.dedup();
 
-    //create_shadow(osu_path, path, keep);
+    create_shadow(osu_path, path, keep);
     Ok(())
 }
     
@@ -118,23 +122,25 @@ fn evaluate_song_files(song_path: PathBuf, song_file_path: PathBuf) -> Vec<PathB
         {
             return Vec::new();
         }
+        
+        let mut paths_to_keep: Vec<PathBuf> = Vec::new();
+        let mut osu_file: OsuFile = OsuFile::new();
+        osu_file.parse(song_file_path);
+
+        paths_to_keep.push(song_file_clone);
+
+        if osu_file.events_section.background.exists {
+            let background = Path::new(&song_path_clone).join(osu_file.events_section.background.file_name).clone();
+            paths_to_keep.push(background);
+        }
+
+        let audio = Path::new(&song_path_clone).join(osu_file.general_section.audio_file_name);
+        paths_to_keep.push(audio);
+
+        return paths_to_keep;
     }
 
-    let mut paths_to_keep: Vec<PathBuf> = Vec::new();
-    let mut osu_file: OsuFile = OsuFile::new();
-    osu_file.parse(song_file_path);
-
-    paths_to_keep.push(song_file_clone);
-
-    if osu_file.events_section.background.exists {
-        let background = Path::new(&song_path_clone).join(osu_file.events_section.background.file_name).clone();
-        paths_to_keep.push(background);
-    }
-
-    let audio = Path::new(&song_path_clone).join(osu_file.general_section.audio_file_name);
-    paths_to_keep.push(audio);
-
-    return paths_to_keep;
+    return Vec::new();
 }
 
 fn strip_option(opt: Option<&str>) -> String

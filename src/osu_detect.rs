@@ -1,6 +1,11 @@
 use winreg::enums::{ HKEY_CLASSES_ROOT, KEY_READ};
 use winreg::RegKey;
 
+///
+/// General todo, fixes and pain points for this file.
+/// - Handle non-existent RegKey.
+/// 
+
 pub fn where_is_osu() -> Result<String, ()>
 {
     //NOTE: Basically we're fetching the path that Osu! uses to handle .osz/.osu and etc. files.

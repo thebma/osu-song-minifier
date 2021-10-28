@@ -21,8 +21,10 @@ use data::{
 /// General todo's for this file:
 /// - Ensure safe conversion OsuFile string -> i8/u8/u32/i32/f32/enum.
 ///   Move this to a util file, to deduplictate the code and some extra for error handling.
-/// - Perhaps we need to resort to unions, explore options to see what is easier (i.e. nested structs vs. union)
-/// 
+/// - Write a function to parse comma seperated lines.
+/// - Parse storyboard elements.
+/// - Parse HitObjects structure.
+/// - Parse TimingObject structure.
 impl OsuFile
 {
     pub fn new() -> OsuFile
@@ -120,8 +122,6 @@ impl OsuFile
         if let Ok((key, value)) = kvp
         {
             let mut section = self.editor_section.clone();
-
-            //TODO: generalize these functions.
             let as_u32 = || -> u32 { value.parse::<u32>().unwrap() };
             let as_f32 = || -> f32 { value.parse::<f32>().unwrap() };
 
@@ -152,8 +152,6 @@ impl OsuFile
         if let Ok((key, value)) = kvp
         {
             let mut section = self.metadata_section.clone();
-
-            // //TODO: generalize these functions.
             let as_i64 = |v: String| -> i64 { v.parse::<i64>().unwrap() };
 
             match key.as_ref() {
@@ -187,8 +185,6 @@ impl OsuFile
         if let Ok((key, value)) = kvp
         {
             let mut section = self.difficulty_section.clone();
-            
-            //TODO: generalize these functions.
             let as_f16 = || -> f16 { f16::from_f32(value.parse::<f32>().unwrap()) };
             
             match key.as_ref()
@@ -212,7 +208,6 @@ impl OsuFile
         Ok(())
     }
 
-    //TODO: This would require it's own functions like match_kvp, but then for match_array. As Events, TimingPoints and HitObjects use this.
     fn parse_events(&mut self, line: String) -> Result<(), String>
     {
         let line_split: Vec<&str> = line.split(",").collect();
@@ -255,14 +250,12 @@ impl OsuFile
             };  
         }
 
-        //TODO: parse storyboard.
         self.events_section = section; 
         Ok(())
     }
 
     fn parse_timing_points(&self, line: String) -> Result<(), String>
     {
-        //TODO: parse hit objects.
         Ok(())
     }
 
@@ -312,15 +305,11 @@ impl OsuFile
     fn parse_hit_objects(&self, line: String) -> Result<(), String>
     {
         Ok(())
-        //TODO: Parse hit objects.
-        //println!("Handle hit objects...")
     }
 
     pub fn parse(&mut self, file: PathBuf)
     {
         let path = file.clone();
-        println!("Parsing .osu file: {:?}", path);
-
         let osu_file = File::open(file)
             .expect("Failed reading .osu file.");
         
