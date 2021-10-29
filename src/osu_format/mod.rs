@@ -25,6 +25,9 @@ use data::{
 /// - Parse storyboard elements.
 /// - Parse HitObjects structure.
 /// - Parse TimingObject structure.
+/// 
+/// Long term
+/// - Support non utf-8 files.
 impl OsuFile
 {
     pub fn new() -> OsuFile
@@ -309,23 +312,39 @@ impl OsuFile
 
     pub fn parse(&mut self, file: PathBuf)
     {
-        let path = file.clone();
         let osu_file = File::open(file)
             .expect("Failed reading .osu file.");
         
         let file_reader: BufReader<File> = BufReader::new(osu_file);
         let mut context: String = String::new();
 
+        self.is_valid = true;
+
         for line_wrap in file_reader.lines()
         {
-            let line: String = line_wrap.unwrap().clone();
-            let line_copy = line.clone();
+            if !self.is_valid 
+            { 
+                break; 
+            }
 
+            let mut line: String = String::new();
+
+            if let Err(_) = line_wrap 
+            {
+                continue;
+            }
+            else if let Ok(unwrapped_line) = line_wrap 
+            {
+                line = unwrapped_line;
+            }
+            
+            let line_copy = line.clone();
+            
             if line.trim().is_empty() || line.starts_with("//")
             {
                 continue;
             }
-
+            
             //Adjust the current context if needed.
             if line.starts_with("[") && line.ends_with("]") 
             {
@@ -357,8 +376,22 @@ impl OsuFile
                     _ => Err(format!("Context {} was not handled.", context), )
                 };
 
+
                 match result {
-                    Err(err) => { println!("Failed to parse for with error: {}\n\tContext {}\n\tValue {}", err, context, line_copy); }
+                    Err(err) => 
+                    {
+                        //NOTE: If we parsed the file and found that the version is incorrect....
+                        //      Then this is a faulty file to begin with.
+                        if context == "" 
+                        {
+                            println!("Tried parsing an invalid file, error: {}", err); 
+                            self.is_valid = false;
+                        }
+                        else
+                        {
+                            println!("Failed to parse line for with error: {}\n\tContext {}\n\tValue {}", err, context, line_copy); 
+                        }
+                    }
                     _ => {},
                 };
             }

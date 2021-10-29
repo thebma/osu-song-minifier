@@ -19,8 +19,17 @@ use osu_format::data::OsuFile;
         "Zip" => Same as copy, but outputs a zip.
     - Handle when no Osu! installation was found.
         Perhaps even offer an manual way of configuring Osu! installation path.
+    - Multi-threaded beatmap processing.
 */
-fn main() 
+#[derive(Default)]
+pub struct ShadowTransaction
+{
+    from: PathBuf,
+    to: PathBuf
+}
+
+#[tokio::main]
+async fn main() 
 {
     let start = Instant::now(); 
     let mut root: String = String::new();
@@ -35,7 +44,7 @@ fn main()
 
     if songs_path.exists() 
     {
-        match iterate_songs(osu_path, songs_path)
+        match iterate_songs(osu_path, songs_path).await
         {
             Ok(_) => { println!("Successfully parsed Osu! directory.")},
             Err(err) => { panic!("Failed to parse you Osu! directory, error: {}", err)}
@@ -73,25 +82,27 @@ fn recurse_directory(path: PathBuf, predicate: impl Fn(PathBuf) -> bool) -> Vec<
     return found;
 }
 
-fn iterate_songs(osu_path: PathBuf, songs_folder: PathBuf) -> Result<(), io::Error>
+async fn iterate_songs(osu_path: PathBuf, songs_folder: PathBuf) -> Result<(), io::Error>
 {
     let songs = recurse_directory(songs_folder, | path | { path.exists() && path.is_dir() });
+    let mut transactions: Vec<ShadowTransaction> = Vec::new();
 
     for song in songs {
-        evaluate_song(osu_path.clone(), song)?;
+        evaluate_song(&mut transactions, osu_path.clone(), song)?;
     }
+
+    perform_transactions(&transactions).await;
 
     Ok(())
 }
 
-fn evaluate_song(osu_path: PathBuf, song_path: PathBuf) -> Result<(), io::Error>
+fn evaluate_song(transactions: &mut Vec<ShadowTransaction>, osu_path: PathBuf, song_path: PathBuf) -> Result<(), io::Error>
 {
     println!("Parsing song: {:?}", song_path);
-
-    Ok(iterate_song_files(osu_path, song_path)?)
+    Ok(iterate_song_files(transactions, osu_path, song_path)?)
 }
 
-fn iterate_song_files(osu_path: PathBuf, song_path: PathBuf) -> Result<(), io::Error>
+fn iterate_song_files(transactions: &mut Vec<ShadowTransaction>, osu_path: PathBuf, song_path: PathBuf) -> Result<(), io::Error>
 {
     let path = song_path.clone();
     let mut keep: Vec<PathBuf> = Vec::new();
@@ -105,7 +116,7 @@ fn iterate_song_files(osu_path: PathBuf, song_path: PathBuf) -> Result<(), io::E
     keep.sort();
     keep.dedup();
 
-    create_shadow(osu_path, path, keep);
+    save_transaction(transactions, osu_path, path, keep);
     Ok(())
 }
     
@@ -126,6 +137,11 @@ fn evaluate_song_files(song_path: PathBuf, song_file_path: PathBuf) -> Vec<PathB
         let mut paths_to_keep: Vec<PathBuf> = Vec::new();
         let mut osu_file: OsuFile = OsuFile::new();
         osu_file.parse(song_file_path);
+
+        if !osu_file.is_valid 
+        {
+            return Vec::new();
+        }
 
         paths_to_keep.push(song_file_clone);
 
@@ -152,7 +168,7 @@ fn strip_option(opt: Option<&str>) -> String
     return String::new();
 }
 
-fn create_shadow(osu_path: PathBuf, song_folder: PathBuf, keep: Vec<PathBuf>)
+fn save_transaction(transactions: &mut Vec<ShadowTransaction>, osu_path: PathBuf, song_folder: PathBuf, keep: Vec<PathBuf>)
 {
     let shadow = Path::new(&osu_path).join("Shadow");
     let osu = Path::new(&osu_path).join("Songs");
@@ -172,15 +188,36 @@ fn create_shadow(osu_path: PathBuf, song_folder: PathBuf, keep: Vec<PathBuf>)
         }
     }
 
-    for file in keep {
+    for file in keep 
+    {
         let mut file_str = strip_option(file.to_str());
         file_str = file_str.replace(&osu_str, &shadow_str);
         let file_path = Path::new(&file_str);
 
-        match fs::copy(file, file_path)      
+        transactions.push(ShadowTransaction {
+            from: file,
+            to: file_path.to_path_buf()
+        });
+    }
+}
+
+async fn perform_transactions(transactions: &Vec<ShadowTransaction>)
+{
+    for transaction in transactions
+    {
+        let mut to_path: PathBuf = Path::new(&transaction.to).to_path_buf();
+        to_path.pop();
+
+        tokio::fs::create_dir_all(&to_path).await.unwrap();
+
+        if Path::new(&transaction.from).exists()
         {
-            Ok(_) => {},
-            Err(e) => { println!("Failed to create copy to shadow: {}", e)}
+            println!("from {:?} to {:?}", transaction.from, transaction.to);
+            tokio::fs::copy(&transaction.from, &transaction.to).await.unwrap();
+        }
+        else
+        {
+            println!("are you high?");
         }
     }
 }

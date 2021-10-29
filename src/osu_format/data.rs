@@ -252,6 +252,7 @@ pub struct OsuFileHitObjects
 pub struct OsuFile
 {
     pub version: String,
+    pub is_valid: bool,
     pub general_section: OsuFileGeneral,
     pub editor_section: OsuFileEditor,
     pub metadata_section: OsuFileMetadata,
