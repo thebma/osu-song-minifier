@@ -14,7 +14,9 @@ use data::{
     OsuFileVideo,
     OsuFileSampleSet,
     OsuFileGamemode,
-    OsuFileOverlayPosition
+    OsuFileTimingPoint,
+    OsuFileOverlayPosition,
+    CsvValue
 };
 
 ///
@@ -24,7 +26,8 @@ use data::{
 /// - Write a function to parse comma seperated lines.
 /// - Parse storyboard elements.
 /// - Parse HitObjects structure.
-/// - Parse TimingObject structure.
+/// - Convert fields to lowercase, some beatmaps have fields not correctly capitalized.
+///   Assuming Osu! handles these gracefully.
 /// 
 /// Long term
 /// - Support non utf-8 files.
@@ -58,6 +61,25 @@ impl OsuFile
             let err = format!("invalid key-value pair on value: {} ", line);
             Err(err)
         }
+    }
+
+    fn match_csv(&self, line: String) -> Result<Vec<CsvValue>, String>
+    {
+        let csv: Vec<&str> = line.split(",").collect();
+
+        if csv.len() <= 0 
+        {
+            return Err("no values inside csv.".to_owned());
+        }
+
+        let mut values: Vec<CsvValue> = Vec::new();
+
+        for csv_part in csv
+        {   
+            values.push(CsvValue { value: csv_part.to_owned() });
+        }
+
+        Ok(values)
     }
 
     fn parse_version(&mut self, line: String) -> Result<(), String>
@@ -257,8 +279,38 @@ impl OsuFile
         Ok(())
     }
 
-    fn parse_timing_points(&self, line: String) -> Result<(), String>
+    fn parse_timing_points(&mut self, line: String) -> Result<(), String>
     {
+        let mut section = self.timing_points_section.clone();
+        let csv_match_result = self.match_csv(line);
+
+        if let Ok(csv_match) = csv_match_result
+        {
+            let mut index: u32 = 0;
+            let mut timing_point: OsuFileTimingPoint = OsuFileTimingPoint { ..Default::default() }; 
+
+            for csv in csv_match
+            {
+                match index
+                {
+                    0 => { timing_point.time = csv.to_f32() },
+                    1 => { timing_point.beat_length = csv.to_f32() },
+                    2 => { timing_point.meter = csv.to_i32() },
+                    3 => { timing_point.sample_set = OsuFileSampleSet::from_u32(csv.to_u32()); },
+                    4 => { timing_point.sample_index = csv.to_i32(); },
+                    5 => { timing_point.volume = csv.to_i32(); },
+                    6 => { timing_point.uninherited = csv.to_bool() },
+                    7 => { timing_point.effects = csv.to_i32(); }
+                    _ => { }
+                }
+
+                index += 1;
+            }
+
+            section.timing_points.push(timing_point);
+        }
+
+        self.timing_points_section = section;
         Ok(())
     }
 
@@ -307,6 +359,7 @@ impl OsuFile
 
     fn parse_hit_objects(&self, line: String) -> Result<(), String>
     {
+
         Ok(())
     }
 

@@ -20,6 +20,7 @@ use osu_format::data::OsuFile;
     - Handle when no Osu! installation was found.
         Perhaps even offer an manual way of configuring Osu! installation path.
     - Multi-threaded beatmap processing.
+    - Filter out non-Osu! gamemodes (taiko, ctb).
 */
 #[derive(Default)]
 pub struct ShadowTransaction
@@ -91,8 +92,7 @@ async fn iterate_songs(osu_path: PathBuf, songs_folder: PathBuf) -> Result<(), i
         evaluate_song(&mut transactions, osu_path.clone(), song)?;
     }
 
-    perform_transactions(&transactions).await;
-
+    //perform_transactions(&transactions).await;
     Ok(())
 }
 
@@ -214,10 +214,6 @@ async fn perform_transactions(transactions: &Vec<ShadowTransaction>)
         {
             println!("from {:?} to {:?}", transaction.from, transaction.to);
             tokio::fs::copy(&transaction.from, &transaction.to).await.unwrap();
-        }
-        else
-        {
-            println!("are you high?");
         }
     }
 }

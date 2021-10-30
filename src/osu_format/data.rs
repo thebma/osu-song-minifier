@@ -3,11 +3,11 @@ use half::{ f16 };
 
 ///
 /// General todos, fixes and pain points for this file:
-/// 
-/// 
-///
-/// 
-/// 
+///  - Specialize collection, i.e. from Vec<&str> to Vec<OsuFileTag>.
+///  - Parse hit objects struct.
+///  - Support deprecated variables as still some maps use them, i.e. StoryInFrontFire
+///  - Support outputting an OsuFile into an .osu file.
+///  - OsuFileColour::from_str could fail if supplied something like "not,a,color".
 /// 
 
 #[repr(u32)] #[derive(Clone, Debug)]
@@ -43,10 +43,25 @@ impl OsuFileGamemode
 #[derive(Clone, Debug, PartialEq)]
 pub enum OsuFileSampleSet
 {
-    Normal,
-    Soft,
-    Drum,
-    None,
+    Default = 0,
+    Normal = 1,
+    Soft = 2,
+    Drum = 3
+}
+
+impl OsuFileSampleSet 
+{
+    pub fn from_u32(integer: u32) -> OsuFileSampleSet
+    {
+        match integer
+        {
+            0 => OsuFileSampleSet::Default,
+            1 => OsuFileSampleSet::Normal,
+            2 => OsuFileSampleSet::Soft,
+            3 => OsuFileSampleSet::Drum,
+            _ => OsuFileSampleSet::Default
+        }
+    }
 }
 
 impl Default for OsuFileSampleSet 
@@ -66,7 +81,7 @@ impl FromStr for OsuFileSampleSet
             "soft" => Ok(OsuFileSampleSet::Soft),
             "drum" => Ok(OsuFileSampleSet::Drum),
             "none" => Ok(OsuFileSampleSet::Normal),
-            _ => Ok(OsuFileSampleSet::None)
+            _ => Ok(OsuFileSampleSet::Default)
         }
     }
 }
@@ -193,9 +208,22 @@ pub struct OsuFileEvents
 }
 
 #[derive(Default, Clone, Debug)]
+pub struct OsuFileTimingPoint
+{
+    pub time: f32,
+    pub beat_length: f32,
+    pub meter: i32,
+    pub sample_set: OsuFileSampleSet,
+    pub sample_index: i32,
+    pub volume: i32,
+    pub uninherited: bool,
+    pub effects: i32,
+}
+
+#[derive(Default, Clone, Debug)]
 pub struct OsuFileTimingPoints 
 {
-    //TODO: Parse timinig points.
+    pub timing_points: Vec<OsuFileTimingPoint>
 }
 
 #[derive(Default, Clone, Debug)]
@@ -243,11 +271,8 @@ impl OsuFileColor
 #[derive(Default, Clone, Debug)]
 pub struct OsuFileHitObjects  
 {
-    //TODO: Parse hit objects.
 }
 
-//TODO: Support deprecated variables, turns out some old map still have them.
-//TODO: Specialize some of the structs, instead of using generic collections.
 #[derive(Default, Clone, Debug)]
 pub struct OsuFile
 {
@@ -261,4 +286,44 @@ pub struct OsuFile
     pub timing_points_section: OsuFileTimingPoints,
     pub colours_section: OsuFileColors,
     pub hit_object_section: OsuFileHitObjects
+}
+
+pub struct CsvValue
+{
+    pub value: String,
+}
+
+impl CsvValue
+{
+    //TODO: make these functions generic.
+    pub fn to_u32(&self) -> u32 
+    {
+        return self.value.parse::<u32>().unwrap();
+    }
+
+    pub fn to_i32(&self) -> i32 
+    {
+        return self.value.parse::<i32>().unwrap();
+    }
+
+    pub fn to_f32(&self) -> f32 
+    {
+        return self.value.parse::<f32>().unwrap();
+    }
+
+    pub fn to_bool(&self) -> bool 
+    {
+        if self.value == "0" || self.value == "false" 
+        {
+            return false;
+        }
+        else if self.value == "1" || self.value == "true" 
+        {
+            return true;
+        }
+        else 
+        {
+            return false;
+        }
+    }
 }
