@@ -303,6 +303,36 @@ pub struct OsuFile
     pub hit_object_section: OsuFileHitObjects
 }
 
+#[derive(Clone, Debug)]
+pub struct OsuFileConfig
+{
+    pub parse_general: bool,
+    pub parse_editor: bool,
+    pub parse_metadata: bool,
+    pub parse_difficulty: bool,
+    pub parse_events: bool,
+    pub parse_timing_points: bool,
+    pub parse_colours: bool,
+    pub parse_hit_objects: bool,
+}
+
+impl Default for OsuFileConfig
+{
+    fn default() -> Self 
+    {
+        OsuFileConfig {
+            parse_general: true,
+            parse_editor:  true,
+            parse_metadata: true,
+            parse_difficulty: true,
+            parse_events: true,
+            parse_timing_points: false,
+            parse_colours: true,
+            parse_hit_objects: false
+        }
+    }
+}
+
 pub struct CsvValue
 {
     pub value: String,

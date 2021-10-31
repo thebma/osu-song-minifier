@@ -8,6 +8,7 @@ use half::{ f16 };
 
 use data::{
     OsuFile,
+    OsuFileConfig,
     OsuFileBackground,
     OsuFileCombo,
     OsuFileColor,
@@ -28,10 +29,10 @@ use data::{
 /// - Convert fields to lowercase, some beatmaps have fields not correctly capitalized.
 ///   Assuming Osu! handles these gracefully.
 /// - Parse the "Effects" field of Timingpoint, require some bitwise magic.
-/// - Support partial parsing of an OsuFile, sometimes we don't need to parse _everything_
 /// 
 /// Long term
 /// - Support non utf-8 files.
+/// 
 impl OsuFile
 {
     pub fn new() -> OsuFile
@@ -392,7 +393,7 @@ impl OsuFile
         Ok(())
     }
 
-    pub fn parse(&mut self, file: PathBuf)
+    pub fn parse(&mut self, file: PathBuf, config: OsuFileConfig)
     {
         let osu_file = File::open(file)
             .expect("Failed reading .osu file.");
@@ -401,6 +402,8 @@ impl OsuFile
         let mut context: String = String::new();
 
         self.is_valid = true;
+
+        let no_op = || -> Result<(), String> { Ok(()) };
 
         for line_wrap in file_reader.lines()
         {
@@ -444,17 +447,18 @@ impl OsuFile
             }
             else 
             {
+                //TODO: This is really clunky and hard to read, can we handle this in the function we're calling?
                 let result: Result<(), String> = match context.as_ref()
                 {
                     "" => self.parse_version(line),
-                    "general" => self.parse_general(line),
-                    "editor" => self.parse_editor(line),
-                    "metadata" => self.parse_metadata(line),
-                    "difficulty" => self.parse_difficulty(line),
-                    "events" => self.parse_events(line),
-                    "timingpoints" => self.parse_timing_points(line),
-                    "colours" => self.parse_colours(line),
-                    "hitobjects" => self.parse_hit_objects(line),
+                    "general" => if config.parse_general { self.parse_general(line) } else { no_op() },
+                    "editor" => if config.parse_editor { self.parse_editor(line) } else { no_op() },
+                    "metadata" => if config.parse_metadata { self.parse_metadata(line) } else { no_op() },
+                    "difficulty" => if config.parse_difficulty { self.parse_difficulty(line) } else { no_op() },
+                    "events" => if config.parse_events { self.parse_events(line) } else { no_op() },
+                    "timingpoints" => if config.parse_timing_points { self.parse_timing_points(line) } else { no_op() },
+                    "colours" => if config.parse_colours { self.parse_colours(line) } else { no_op() },
+                    "hitobjects" => if config.parse_hit_objects { self.parse_hit_objects(line) } else { no_op() },
                     _ => Err(format!("Context {} was not handled.", context), )
                 };
 
