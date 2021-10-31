@@ -144,8 +144,8 @@ fn evaluate_song_files(song_path: PathBuf, song_file_path: PathBuf) -> Vec<PathB
         osu_file.parse(song_file_path, OsuFileConfig {
             parse_colours: false,
             parse_difficulty: false,
-            parse_editor: false,
-            parse_metadata: false,
+            parse_editor: true,
+            parse_metadata: true,
             ..Default::default()
         });
 

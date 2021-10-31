@@ -18,6 +18,8 @@ use data::{
     OsuFileTimingPoint,
     OsuFileHitObject,
     OsuFileOverlayPosition,
+    OsuFileEditorBookmarks,
+    OsuFileMetadataTags,
     CsvValue
 };
 
@@ -155,7 +157,7 @@ impl OsuFile
 
             match key.as_ref()
             {
-                "Bookmarks" => { section.bookmarks = value; },
+                "Bookmarks" => { section.bookmarks = OsuFileEditorBookmarks::from_str(&value).unwrap() },
                 "DistanceSpacing" => { section.distance_spacing = as_f32(); },
                 "BeatDivisor" => { section.beat_divisor = as_f32(); },
                 "GridSize" => { section.grid_size = as_u32(); },
@@ -191,7 +193,7 @@ impl OsuFile
                 "Creator" => { section.creator = value },
                 "Version" => { section.version = value },
                 "Source" => { section.source =  value },
-                "Tags" => { section.tags = value},
+                "Tags" => { section.tags = OsuFileMetadataTags::from_str(&value).unwrap(); },
                 "BeatmapID" => { section.beatmap_id= as_i64(value); },
                 "BeatmapSetID" => { section.beatmap_set_id = as_i64(value); },
                 _ => { println!("Unknown field {} inside metadata section with value: {}", "", value); }

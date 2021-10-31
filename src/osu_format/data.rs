@@ -70,7 +70,10 @@ impl OsuFileSampleSet
 
 impl Default for OsuFileSampleSet 
 {
-    fn default() -> Self { OsuFileSampleSet::Normal }
+    fn default() -> Self 
+    { 
+        OsuFileSampleSet::Normal 
+    }
 }
 
 impl FromStr for OsuFileSampleSet
@@ -116,7 +119,10 @@ impl FromStr for OsuFileOverlayPosition
 
 impl Default for OsuFileOverlayPosition
 {
-    fn default() -> Self { OsuFileOverlayPosition::NoChange }
+    fn default() -> Self 
+    {
+        OsuFileOverlayPosition::NoChange 
+    }
 }
 
 #[derive(Default, Clone, Debug)]
@@ -141,13 +147,65 @@ pub struct OsuFileGeneral
 }
 
 #[derive(Default, Clone, Debug)]
+pub struct OsuFileEditorBookmarks
+{
+    pub bookmarks: Vec<i64>
+}
+
+impl FromStr for OsuFileEditorBookmarks
+{
+    type Err = ();
+    fn from_str(string: &str) -> Result<Self, Self::Err> 
+    {
+        let mut values: Vec<i64> = Vec::new();
+        let split: Vec<&str> = string.split(",").collect();
+        
+        for value in split 
+        {
+            let parse_result = value.parse::<i64>();
+            
+            if let Ok(value_parsed) = parse_result 
+            {
+                values.push(value_parsed);
+            }
+        }
+    
+        Ok(OsuFileEditorBookmarks { bookmarks: values })
+    }
+}
+
+#[derive(Default, Clone, Debug)]
 pub struct OsuFileEditor 
 {
-    pub bookmarks: String, //TODO: Make this a comma seperated value class.
+    pub bookmarks: OsuFileEditorBookmarks,
     pub distance_spacing: f32,
     pub beat_divisor: f32,
     pub grid_size: u32,
     pub timeline_zoom: f32
+}
+
+#[derive(Default, Clone, Debug)]
+pub struct OsuFileMetadataTags
+{
+    pub tags: Vec<String>
+}
+
+impl FromStr for OsuFileMetadataTags
+{
+    type Err = ();
+
+    fn from_str(string: &str) -> Result<Self, Self::Err> 
+    {
+        let mut values: Vec<String> = Vec::new();
+        let split: Vec<&str> = string.split(" ").collect();
+        
+        for value in split 
+        {
+            values.push(value.to_owned());
+        }
+        
+        Ok(OsuFileMetadataTags { tags: values })
+    }
 }
 
 #[derive(Default, Clone, Debug)]
@@ -160,7 +218,7 @@ pub struct OsuFileMetadata
     pub creator: String,
     pub version: String,
     pub source: String,
-    pub tags: String, //TODO: Make this a comma seperated value class.
+    pub tags: OsuFileMetadataTags,
     pub beatmap_id: i64,
     pub beatmap_set_id: i64,
 }
