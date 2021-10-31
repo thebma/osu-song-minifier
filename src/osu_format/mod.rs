@@ -15,6 +15,7 @@ use data::{
     OsuFileSampleSet,
     OsuFileGamemode,
     OsuFileTimingPoint,
+    OsuFileHitObject,
     OsuFileOverlayPosition,
     CsvValue
 };
@@ -23,11 +24,11 @@ use data::{
 /// General todo's for this file:
 /// - Ensure safe conversion OsuFile string -> i8/u8/u32/i32/f32/enum.
 ///   Move this to a util file, to deduplictate the code and some extra for error handling.
-/// - Write a function to parse comma seperated lines.
-/// - Parse storyboard elements.
-/// - Parse HitObjects structure.
+/// - Parse storyboard elements for Events section.
 /// - Convert fields to lowercase, some beatmaps have fields not correctly capitalized.
 ///   Assuming Osu! handles these gracefully.
+/// - Parse the "Effects" field of Timingpoint, require some bitwise magic.
+/// - Support partial parsing of an OsuFile, sometimes we don't need to parse _everything_
 /// 
 /// Long term
 /// - Support non utf-8 files.
@@ -296,11 +297,11 @@ impl OsuFile
                     0 => { timing_point.time = csv.to_f32() },
                     1 => { timing_point.beat_length = csv.to_f32() },
                     2 => { timing_point.meter = csv.to_i32() },
-                    3 => { timing_point.sample_set = OsuFileSampleSet::from_u32(csv.to_u32()); },
+                    3 => { timing_point.sample_set = OsuFileSampleSet::from_u32(csv.to_u32()) },
                     4 => { timing_point.sample_index = csv.to_i32(); },
                     5 => { timing_point.volume = csv.to_i32(); },
                     6 => { timing_point.uninherited = csv.to_bool() },
-                    7 => { timing_point.effects = csv.to_i32(); }
+                    7 => { timing_point.effects = csv.to_i32() }
                     _ => { }
                 }
 
@@ -357,9 +358,37 @@ impl OsuFile
         Ok(())
     }
 
-    fn parse_hit_objects(&self, line: String) -> Result<(), String>
+    fn parse_hit_objects(&mut self, line: String) -> Result<(), String>
     {
+        let mut section = self.hit_object_section.clone();
+        let csv_match_result = self.match_csv(line);
 
+        if let Ok(csv_match) = csv_match_result
+        {
+            let mut index: u32 = 0;
+            let mut hit_object: OsuFileHitObject = OsuFileHitObject { ..Default::default() }; 
+
+            for csv in csv_match
+            {
+                match index
+                {
+                    0 => { hit_object.x = csv.to_i32() },
+                    1 => { hit_object.y = csv.to_i32() },
+                    2 => { hit_object.time = csv.to_i32() },
+                    3 => { hit_object.hit_sound= csv.to_u8() },
+                    4 => { hit_object.params = csv.value },
+                    5 => { hit_object.hit_sample = csv.value },
+                    _ => { }
+                }
+
+                index += 1;
+            }
+
+            //println!("{:?}", hit_object);
+            section.hit_objects.push(hit_object);
+        }
+
+        self.hit_object_section = section;
         Ok(())
     }
 

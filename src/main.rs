@@ -137,7 +137,7 @@ fn evaluate_song_files(song_path: PathBuf, song_file_path: PathBuf) -> Vec<PathB
         let mut paths_to_keep: Vec<PathBuf> = Vec::new();
         let mut osu_file: OsuFile = OsuFile::new();
         osu_file.parse(song_file_path);
-
+        
         if !osu_file.is_valid 
         {
             return Vec::new();

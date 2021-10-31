@@ -4,10 +4,11 @@ use half::{ f16 };
 ///
 /// General todos, fixes and pain points for this file:
 ///  - Specialize collection, i.e. from Vec<&str> to Vec<OsuFileTag>.
-///  - Parse hit objects struct.
 ///  - Support deprecated variables as still some maps use them, i.e. StoryInFrontFire
 ///  - Support outputting an OsuFile into an .osu file.
 ///  - OsuFileColour::from_str could fail if supplied something like "not,a,color".
+///  - Specialize HitObject's params field into something csv-ish.
+///  - Specialize HitObject's hit_sample field into it's own struct.
 /// 
 
 #[repr(u32)] #[derive(Clone, Debug)]
@@ -204,6 +205,7 @@ pub struct OsuFileEvents
     pub background: OsuFileBackground,
     pub video: OsuFileVideo,
     pub breaks: Vec<OsuFileBreakPeriod>,
+
     //TODO: Do the storyboard crap.
 }
 
@@ -269,8 +271,21 @@ impl OsuFileColor
 }
 
 #[derive(Default, Clone, Debug)]
-pub struct OsuFileHitObjects  
+pub struct OsuFileHitObject
 {
+    pub x: i32,
+    pub y: i32,
+    pub time: i32,
+    pub hit_type: u8,
+    pub hit_sound: u8,
+    pub params: String, 
+    pub hit_sample: String,
+}
+
+#[derive(Default, Clone, Debug)]
+pub struct OsuFileHitObjects  
+{   
+    pub hit_objects: Vec<OsuFileHitObject>
 }
 
 #[derive(Default, Clone, Debug)]
@@ -299,6 +314,11 @@ impl CsvValue
     pub fn to_u32(&self) -> u32 
     {
         return self.value.parse::<u32>().unwrap();
+    }
+
+    pub fn to_u8(&self) -> u8
+    {
+        return self.value.parse::<u8>().unwrap();
     }
 
     pub fn to_i32(&self) -> i32 
