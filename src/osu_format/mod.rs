@@ -112,7 +112,8 @@ impl OsuFile
             let as_game_mode = || -> OsuFileGamemode { OsuFileGamemode::from_u32(as_u32()) };
             let as_overlay = || -> OsuFileOverlayPosition { OsuFileOverlayPosition::from_str(&value).unwrap()};
 
-            match key.as_ref() {
+            match key.as_ref() 
+            {
                 "AudioFilename" => { section.audio_file_name = value },
                 "AudioLeadIn" => { section.audio_lead_in = as_i32() },
                 "PreviewTime" => { section.preview_time = as_i32(); },
@@ -181,7 +182,8 @@ impl OsuFile
             let mut section = self.metadata_section.clone();
             let as_i64 = |v: String| -> i64 { v.parse::<i64>().unwrap() };
 
-            match key.as_ref() {
+            match key.as_ref() 
+            {
                 "Title" => { section.title = value },
                 "TitleUnicode" => { section.title_unicode =  value },
                 "Artist" => { section.artist = value },
@@ -253,7 +255,8 @@ impl OsuFile
             let x_offset = if line_split.len() == 4 { line_split[3].parse::<i32>().unwrap() } else { 0 };
             let y_offset = if line_split.len() == 5 { line_split[4].parse::<i32>().unwrap() } else { 0 };
             
-            section.background = OsuFileBackground {
+            section.background = OsuFileBackground 
+            {
                 exists: true, 
                 file_name: file,
                 x_offset: x_offset,
@@ -268,7 +271,8 @@ impl OsuFile
             let x_offset = if line_split.len() == 4 { line_split[3].parse::<i32>().unwrap() } else { 0 };
             let y_offset = if line_split.len() == 5 { line_split[4].parse::<i32>().unwrap() } else { 0 };
             
-            section.video = OsuFileVideo {
+            section.video = OsuFileVideo 
+            {
                 exists: true, 
                 start_time: start_time,
                 file_name: file,
@@ -331,9 +335,7 @@ impl OsuFile
 
                 if let Ok(color) = OsuFileColor::from_str(value)
                 {
-                    section.combo_colors.push(OsuFileCombo { 
-                        index: index, color: color
-                    });
+                    section.combo_colors.push(OsuFileCombo { index: index, color: color });
                 }
             }
             else if key.starts_with("SliderBorder")
@@ -385,7 +387,6 @@ impl OsuFile
                 index += 1;
             }
 
-            //println!("{:?}", hit_object);
             section.hit_objects.push(hit_object);
         }
 
@@ -436,10 +437,13 @@ impl OsuFile
                 let heading: String = line
                     .chars()
                     .skip(1)
-                    .take_while(|c| match c {
-                        ']' => false,
-                        _ => true
-                    })
+                    .take_while(|c| 
+                        match c 
+                        {
+                            ']' => false,
+                            _ => true
+                        }
+                    )
                     .collect();
 
                 if heading.is_empty() { continue; };
@@ -463,7 +467,8 @@ impl OsuFile
                 };
 
 
-                match result {
+                match result 
+                {
                     Err(err) => 
                     {
                         //NOTE: If we parsed the file and found that the version is incorrect....
@@ -478,7 +483,7 @@ impl OsuFile
                             println!("Failed to parse line for with error: {}\n\tContext {}\n\tValue {}", err, context, line_copy); 
                         }
                     }
-                    _ => {},
+                    _ => { },
                 };
             }
         }

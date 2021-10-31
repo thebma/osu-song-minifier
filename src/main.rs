@@ -36,7 +36,8 @@ async fn main()
     let start = Instant::now(); 
     let mut root: String = String::new();
 
-    match osu_detect::where_is_osu() {
+    match osu_detect::where_is_osu() 
+    {
         Ok(v) => { root = v; },
         Err(_) => { println!("Unable to locate Osu! install path."); }
     };
@@ -89,7 +90,8 @@ async fn iterate_songs(osu_path: PathBuf, songs_folder: PathBuf) -> Result<(), i
     let songs = recurse_directory(songs_folder, | path | { path.exists() && path.is_dir() });
     let mut transactions: Vec<ShadowTransaction> = Vec::new();
 
-    for song in songs {
+    for song in songs 
+    {
         evaluate_song(&mut transactions, osu_path.clone(), song)?;
     }
 
@@ -110,7 +112,8 @@ fn iterate_song_files(transactions: &mut Vec<ShadowTransaction>, osu_path: PathB
 
     let files: Vec<PathBuf> = recurse_directory(song_path, |path| { path.exists() && path.is_file() });
 
-    for file in files {
+    for file in files 
+    {
         keep.extend(evaluate_song_files(path.clone(), file));
     }
 
@@ -130,6 +133,7 @@ fn evaluate_song_files(song_path: PathBuf, song_file_path: PathBuf) -> Vec<PathB
     if let Some(ext) = extension 
     {
         let ext_str: &str = ext.to_str().unwrap();
+
         if !ext_str.contains("osu")
         {
             return Vec::new();
@@ -152,7 +156,8 @@ fn evaluate_song_files(song_path: PathBuf, song_file_path: PathBuf) -> Vec<PathB
 
         paths_to_keep.push(song_file_clone);
 
-        if osu_file.events_section.background.exists {
+        if osu_file.events_section.background.exists 
+        {
             let background = Path::new(&song_path_clone).join(osu_file.events_section.background.file_name).clone();
             paths_to_keep.push(background);
         }
@@ -168,7 +173,8 @@ fn evaluate_song_files(song_path: PathBuf, song_file_path: PathBuf) -> Vec<PathB
 
 fn strip_option(opt: Option<&str>) -> String
 {
-    if let Some(stripped) = opt {
+    if let Some(stripped) = opt 
+    {
         return stripped.to_owned();
     }
 
@@ -187,7 +193,8 @@ fn save_transaction(transactions: &mut Vec<ShadowTransaction>, osu_path: PathBuf
     let new_str = song_str.replace(&osu_str, &shadow_str);
     let new_path = Path::new(&new_str);
 
-    if !new_path.exists() {
+    if !new_path.exists() 
+    {
         match fs::create_dir_all(new_path)
         {
             Ok(_) => {},

@@ -23,7 +23,10 @@ pub enum OsuFileGamemode
 
 impl Default for OsuFileGamemode
 {
-    fn default() -> Self { OsuFileGamemode::Osu }
+    fn default() -> Self 
+    { 
+        OsuFileGamemode::Osu 
+    }
 }
 
 impl OsuFileGamemode
@@ -205,8 +208,6 @@ pub struct OsuFileEvents
     pub background: OsuFileBackground,
     pub video: OsuFileVideo,
     pub breaks: Vec<OsuFileBreakPeriod>,
-
-    //TODO: Do the storyboard crap.
 }
 
 #[derive(Default, Clone, Debug)]
@@ -255,18 +256,23 @@ impl OsuFileColor
 {
     pub fn from_str(input: String) -> Result<OsuFileColor, String>
     {
-        let rgb: Vec<&str> = input.split(",").collect();
+        let rgb: Vec<&str> = input
+            .split(",")
+            .collect();
 
         if rgb.len() != 3 
         {
             return Err(String::from("Given string does not represent a color."))
         }
 
-        Ok(OsuFileColor { 
+        let colour = OsuFileColor 
+        { 
             red: rgb[0].parse::<u8>().unwrap(), 
             green: rgb[1].parse::<u8>().unwrap(), 
             blue: rgb[2].parse::<u8>().unwrap()
-        })
+        };
+
+        Ok(colour)
     }
 }
 
@@ -320,7 +326,8 @@ impl Default for OsuFileConfig
 {
     fn default() -> Self 
     {
-        OsuFileConfig {
+        OsuFileConfig 
+        {
             parse_general: true,
             parse_editor:  true,
             parse_metadata: true,
