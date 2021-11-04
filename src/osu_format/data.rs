@@ -3,7 +3,6 @@ use half::{ f16 };
 
 ///
 /// General todos, fixes and pain points for this file:
-///  - Specialize collection, i.e. from Vec<&str> to Vec<OsuFileTag>.
 ///  - Support deprecated variables as still some maps use them, i.e. StoryInFrontFire
 ///  - Support outputting an OsuFile into an .osu file.
 ///  - OsuFileColour::from_str could fail if supplied something like "not,a,color".

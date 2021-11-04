@@ -10,10 +10,6 @@ use osu_format::data::OsuFileConfig;
 
 /*
     General todo's for this application:
-    - Properly handle Option<> / Error handling on IO errors.
-      Unwrapping and praying for the best is the current approach, which arguebly is not the most bulletproof :)
-        Whilest generalizing the iteration code, we nuked all the Result<> structures, an even worse idea.
-        Might wanna test this throughougly!
     - Specify modes for "cleaning"...
         "Destructive" => Delete the files directly from your Songs folder.
         "Copy" => Create a new directory with the files.
@@ -101,7 +97,7 @@ async fn iterate_songs(osu_path: PathBuf, songs_folder: PathBuf) -> Result<(), i
 
 fn evaluate_song(transactions: &mut Vec<ShadowTransaction>, osu_path: PathBuf, song_path: PathBuf) -> Result<(), io::Error>
 {
-    println!("Parsing song: {:?}", song_path);
+    //println!("Parsing song: {:?}", song_path);
     Ok(iterate_song_files(transactions, osu_path, song_path)?)
 }
 

@@ -28,8 +28,6 @@ use data::{
 /// - Ensure safe conversion OsuFile string -> i8/u8/u32/i32/f32/enum.
 ///   Move this to a util file, to deduplictate the code and some extra for error handling.
 /// - Parse storyboard elements for Events section.
-/// - Convert fields to lowercase, some beatmaps have fields not correctly capitalized.
-///   Assuming Osu! handles these gracefully.
 /// - Parse the "Effects" field of Timingpoint, require some bitwise magic.
 /// 
 /// Long term
@@ -51,14 +49,14 @@ impl OsuFile
         {
             let key = kvp[0].trim().to_owned();
             let value = kvp[1].trim().to_owned();
-            Ok((key, value))
+            Ok((key.to_lowercase(), value))
         }
         else if kvp_len > 2
         {
             let key = kvp[0].trim().to_owned();
             let kvp_slice: Vec<&str> = kvp.into_iter().skip(1).take(kvp_len - 1).collect();
             let value = kvp_slice.join(":");
-            Ok((key, value))
+            Ok((key.to_lowercase(), value))
         }
         else
         {
@@ -116,22 +114,22 @@ impl OsuFile
 
             match key.as_ref() 
             {
-                "AudioFilename" => { section.audio_file_name = value },
-                "AudioLeadIn" => { section.audio_lead_in = as_i32() },
-                "PreviewTime" => { section.preview_time = as_i32(); },
-                "Countdown" => { section.countdown = as_u32(); },
-                "SampleSet" => { section.sample_set = as_sample_set(); },
-                "StackLeniency" => { section.stack_leniency = as_f32(); },
-                "Mode" => { section.mode = as_game_mode(); },
-                "LetterboxInBreaks" => { section.letterbox_in_breaks = as_bool(); },
-                "UseSkinSprites" => { section.use_skin_sprites = as_bool(); },
-                "OverlayPosition" => { section.overlay_position = as_overlay(); },
-                "SkinPreference" => { section.skin_preference = value },
-                "EpilepsyWarning" => { section.epilepsy_warning = as_bool() },
-                "CountdownOffset" => { section.countdown_offset = as_u32()},
-                "SpecialStyle" => { section.special_style = as_bool()},
-                "WidescreenStoryboard" => { section.widescreen_storyboard = as_bool() },
-                "SamplesMatchPlaybackRate" => { section.samples_match_playback_rate = as_bool() },
+                "audiofilename" => { section.audio_file_name = value },
+                "audioleadin" => { section.audio_lead_in = as_i32() },
+                "previewtime" => { section.preview_time = as_i32(); },
+                "countdown" => { section.countdown = as_u32(); },
+                "sampleset" => { section.sample_set = as_sample_set(); },
+                "stackleniency" => { section.stack_leniency = as_f32(); },
+                "mode" => { section.mode = as_game_mode(); },
+                "letterboxinbreaks" => { section.letterbox_in_breaks = as_bool(); },
+                "useskinsprites" => { section.use_skin_sprites = as_bool(); },
+                "overlayposition" => { section.overlay_position = as_overlay(); },
+                "skinpreference" => { section.skin_preference = value },
+                "epilepsywarning" => { section.epilepsy_warning = as_bool() },
+                "countdownoffset" => { section.countdown_offset = as_u32()},
+                "specialstyle" => { section.special_style = as_bool()},
+                "widescreenstoryboard" => { section.widescreen_storyboard = as_bool() },
+                "samplesmatchplaybackrate" => { section.samples_match_playback_rate = as_bool() },
                 _ => { println!("Unknown field {} inside general section with value: {}", key, value); }
             }
 
@@ -157,11 +155,11 @@ impl OsuFile
 
             match key.as_ref()
             {
-                "Bookmarks" => { section.bookmarks = OsuFileEditorBookmarks::from_str(&value).unwrap() },
-                "DistanceSpacing" => { section.distance_spacing = as_f32(); },
-                "BeatDivisor" => { section.beat_divisor = as_f32(); },
-                "GridSize" => { section.grid_size = as_u32(); },
-                "TimelineZoom" => { section.timeline_zoom = as_f32(); }
+                "bookmarks" => { section.bookmarks = OsuFileEditorBookmarks::from_str(&value).unwrap() },
+                "distancespacing" => { section.distance_spacing = as_f32(); },
+                "beatdivisor" => { section.beat_divisor = as_f32(); },
+                "gridsize" => { section.grid_size = as_u32(); },
+                "timelinezoom" => { section.timeline_zoom = as_f32(); }
                 _ => { println!("Unknown field {} inside editor section with value: {}", key, value); }
             }
 
@@ -186,16 +184,16 @@ impl OsuFile
 
             match key.as_ref() 
             {
-                "Title" => { section.title = value },
-                "TitleUnicode" => { section.title_unicode =  value },
-                "Artist" => { section.artist = value },
-                "ArtistUnicode" => { section.artist_unicode = value },
-                "Creator" => { section.creator = value },
-                "Version" => { section.version = value },
-                "Source" => { section.source =  value },
-                "Tags" => { section.tags = OsuFileMetadataTags::from_str(&value).unwrap(); },
-                "BeatmapID" => { section.beatmap_id= as_i64(value); },
-                "BeatmapSetID" => { section.beatmap_set_id = as_i64(value); },
+                "title" => { section.title = value },
+                "titleunicode" => { section.title_unicode =  value },
+                "artist" => { section.artist = value },
+                "artistunicode" => { section.artist_unicode = value },
+                "creator" => { section.creator = value },
+                "version" => { section.version = value },
+                "source" => { section.source =  value },
+                "tags" => { section.tags = OsuFileMetadataTags::from_str(&value).unwrap(); },
+                "beatmapid" => { section.beatmap_id= as_i64(value); },
+                "beatmapsetid" => { section.beatmap_set_id = as_i64(value); },
                 _ => { println!("Unknown field {} inside metadata section with value: {}", "", value); }
             }
 
@@ -220,12 +218,12 @@ impl OsuFile
             
             match key.as_ref()
             {
-                "HPDrainRate" => { section.hp_drain_rate = as_f16(); },
-                "CircleSize" => { section.circle_size = as_f16(); },
-                "OverallDifficulty" => { section.overall_difficulty = as_f16(); },
-                "ApproachRate" => { section.approach_rate = as_f16(); },
-                "SliderMultiplier" => { section.slider_multiplier = as_f16(); },
-                "SliderTickRate" => { section.slider_tick_rate= as_f16(); },
+                "hpdrainrate" => { section.hp_drain_rate = as_f16(); },
+                "circlesize" => { section.circle_size = as_f16(); },
+                "overalldifficulty" => { section.overall_difficulty = as_f16(); },
+                "approachrate" => { section.approach_rate = as_f16(); },
+                "slidermultiplier" => { section.slider_multiplier = as_f16(); },
+                "slidertickrate" => { section.slider_tick_rate= as_f16(); },
                 _ => { println!("Unknown field {} inside difficulty section with value: {}", key, value); }
             }
 
@@ -248,8 +246,8 @@ impl OsuFile
             return Err(format!("no csv string provided, got: {}", line));
         }
 
-        let event_type = line_split[0];
         let mut section = self.events_section.clone();
+        let event_type = line_split[0];
 
         if line_split.len() >= 3 && (event_type == "0" || event_type == "Background") 
         {
@@ -330,9 +328,9 @@ impl OsuFile
         {
             let mut section = self.colours_section.clone();
 
-            if key.starts_with("Combo")
+            if key.starts_with("combo")
             {
-                let num: String = key.replace("Combo", "");
+                let num: String = key.replace("combo", "");
                 let index = num.parse::<i8>().unwrap();
 
                 if let Ok(color) = OsuFileColor::from_str(value)
@@ -340,11 +338,11 @@ impl OsuFile
                     section.combo_colors.push(OsuFileCombo { index: index, color: color });
                 }
             }
-            else if key.starts_with("SliderBorder")
+            else if key.starts_with("sliderborder")
             {
                 section.slider_border = OsuFileColor::from_str(value).unwrap();
             }
-            else if key.starts_with("SliderTrackOverride")
+            else if key.starts_with("slidertrackoverride")
             {
                 section.slider_track_override = OsuFileColor::from_str(value).unwrap();
             }
